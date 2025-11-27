@@ -1,13 +1,24 @@
 package main
 
 import (
-  "fmt"
-  "net/http"
+	"order-service/controllers"
+	"order-service/db"
+	"order-service/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
-  http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-    fmt.Fprintf(w, "order-service running")
-  })
-  http.ListenAndServe(":8084", nil)
+	db.Connect()
+
+	r := gin.Default()
+
+	// r.POST("/orders", controllers.CreateOrder)
+	r.POST("/orders", middleware.Authenticate(), controllers.CreateOrder)
+
+	r.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"message": "Order service running"})
+	})
+
+	r.Run(":8084")
 }
