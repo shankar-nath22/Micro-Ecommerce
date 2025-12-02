@@ -22,34 +22,45 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -1;
+        return -1; // Run early in the filter chain
     }
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange,
                              org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
 
-        System.out.println("🔥 JwtGatewayFilter triggered: " + exchange.getRequest().getURI());
+        String path = exchange.getRequest().getPath().value();
+        System.out.println("🔥 Filter triggered for: " + path);
 
+        // ✨ Skip JWT validation for /auth/**
+        if (path.startsWith("/auth")) {
+            System.out.println("⏭ Skipping JWT check for auth routes");
+            return chain.filter(exchange);
+        }
+
+        // Read Authorization header
         String authHeader = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-        // Allow unauthenticated requests (if your design requires it)
+        // No token = reject
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return chain.filter(exchange);
+            System.out.println("❌ Missing Bearer token");
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete();
         }
 
         String token = authHeader.substring(7);
 
         try {
-            System.out.println("🔐 Loaded JWT Secret (gateway): " + secret);
             SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
+
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
 
-            // Token is valid
+            System.out.println("✅ JWT validated for user: " + claims.getSubject());
+
             return chain.filter(exchange);
 
         } catch (Exception e) {

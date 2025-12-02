@@ -1,2 +1,3 @@
 /Users/shankarnath/Documents/projects/micro-ecom/api-gateway/src/main/java/com/example/api_gateway/ApiGatewayApplication.java
 /Users/shankarnath/Documents/projects/micro-ecom/api-gateway/src/main/java/com/example/api_gateway/security/JwtGatewayFilter.java
+/Users/shankarnath/Documents/projects/micro-ecom/api-gateway/src/main/java/com/example/api_gateway/config/CorsGlobalConfig.java

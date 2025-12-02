@@ -21,6 +21,12 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
+	role := c.GetString("userRole")
+    if role != "USER" && role != "ADMIN"  {
+        c.JSON(http.StatusForbidden, gin.H{"error": "Only USER can place orders"})
+        return
+    }
+
 	// 1. Get cart items
 	cart, err := services.GetCart(body.UserID)
 	if err != nil {

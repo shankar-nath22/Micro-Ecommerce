@@ -10,12 +10,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var JwtSecret = []byte(getEnv("JWT_SECRET", "FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh..."))
-
 func getEnv(k, def string) string {
-	if v := os.Getenv(k); v != "" { return v }
+	if v := os.Getenv(k); v != "" {
+		return v
+	}
 	return def
 }
+
+// var JwtSecret = []byte(getEnv("JWT_SECRET",
+// 	"FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9",
+// ))
+var JwtSecret = []byte(os.Getenv("JWT_SECRET"))
+
 
 func Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -24,10 +30,10 @@ func Authenticate() gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing token"})
 			return
 		}
+
 		tokenStr := strings.TrimPrefix(auth, "Bearer ")
 
 		token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
-			// ensure algorithm is HMAC
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method")
 			}
@@ -45,6 +51,7 @@ func Authenticate() gin.HandlerFunc {
 
 		c.Set("userEmail", email)
 		c.Set("userRole", role)
+
 		c.Next()
 	}
 }

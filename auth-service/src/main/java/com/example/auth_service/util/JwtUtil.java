@@ -2,6 +2,7 @@ package com.example.auth_service.util;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -28,7 +29,7 @@ public class JwtUtil {
                 .claim("role", role)
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + expirationMs))
-                .signWith(getSigningKey())   // ✔ SAME KEY AS GATEWAY
+                .signWith(getSigningKey(), SignatureAlgorithm.HS256)   // ✔ SAME KEY AS GATEWAY
                 .compact();
     }
 
