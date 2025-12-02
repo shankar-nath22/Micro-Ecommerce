@@ -60,8 +60,11 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
                     .getBody();
 
             System.out.println("✅ JWT validated for user: " + claims.getSubject());
-
-            return chain.filter(exchange);
+            // 🔥 Forward token to downstream services
+            ServerWebExchange modifiedExchange = exchange.mutate()
+                .request(builder -> builder.header(HttpHeaders.AUTHORIZATION, authHeader))
+                .build();
+            return chain.filter(modifiedExchange);
 
         } catch (Exception e) {
             System.out.println("❌ JWT validation failed: " + e.getMessage());

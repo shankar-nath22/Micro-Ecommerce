@@ -1,9 +1,10 @@
 package db
-// 6927acd01e4e2bbe93ee0e64
+
 import (
 	"fmt"
 	"log"
-	// "os"
+
+	"order-service/models"  // <-- important: import your models
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -21,4 +22,14 @@ func Connect() {
 	}
 
 	fmt.Println("📦 Connected to PostgreSQL Order DB")
+
+	// ---------------------------------------------
+	// 🟢 AUTO MIGRATE YOUR DATABASE TABLES HERE
+	// ---------------------------------------------
+	err = DB.AutoMigrate(&models.Order{}, &models.OrderItem{})
+	if err != nil {
+		log.Fatal("❌ AutoMigrate failed!", err)
+	}
+
+	fmt.Println("🛠️ Migrated Order + OrderItem tables")
 }

@@ -7,14 +7,16 @@ const {
   getCart,
   removeItem,
   clearCart,
+  updateQuantity,
 } = require("./controllers/cartController");
 
 const app = express();
-app.use(cors());
+// app.use(cors());
 app.use(bodyParser.json());
 
 const { authenticate, requireRole } = require("./middleware/authMiddleware");
 
+app.post("/cart/update", authenticate, updateQuantity);
 // Protect add to cart (only authenticated users)
 app.post("/cart/add", authenticate, addToCart);
 

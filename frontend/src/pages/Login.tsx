@@ -1,24 +1,29 @@
 import { useState } from "react";
 import api from "../api/axios";
 
-export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+interface LoginResponse {
+  token: string;
+  email: string;
+  role: string;
+}
 
-  const handleLogin = async (e) => {
+export default function Login() {
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [error, setError] = useState<string>("");
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
     try {
-      const res = await api.post("/auth/login", {
+      const res = await api.post<LoginResponse>("/auth/login", {
         email,
         password,
       });
 
       console.log("Login response:", res.data);
 
-      // backend returns: { token, email, role }
       const token = res.data.token;
 
       if (!token) {
@@ -26,8 +31,8 @@ export default function Login() {
         return;
       }
 
-      localStorage.setItem("token", token); // save token
-      window.location.href = "/products";   // redirect
+      localStorage.setItem("token", token); // Save token
+      window.location.href = "/products";   // Redirect
     } catch (err) {
       console.error(err);
       setError("Login failed. Invalid credentials.");
