@@ -4,15 +4,17 @@ import api from "../api/axios";
 import "./Cart.css"; // small styles below
 import { Product } from "../types/product"; // small type file (provided below)
 
+
 type CartMap = Record<string, number>;
 
 export default function Cart() {
-  const USER_ID = "1"; // replace with real user ID from auth if available
+  const USER_ID = localStorage.getItem("userId")!;
   const [cart, setCart] = useState<CartMap>({});
   const [products, setProducts] = useState<Record<string, Product>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-
+  const [animateItem, setAnimateItem] = useState<string | null>(null);
+  
   useEffect(() => {
     loadAll();
     // optionally poll/update on interval or subscribe
@@ -28,7 +30,7 @@ export default function Cart() {
       setProducts(prodMap);
 
       // 2) fetch cart
-      const cartRes = await api.get<CartMap>(`/cart/${USER_ID}`);
+      const cartRes = await api.get<CartMap>("/cart");
       setCart(cartRes.data || {});
     } catch (err) {
       console.error(err);
@@ -41,13 +43,15 @@ export default function Cart() {
   // update quantity (local + backend)
 async function updateQty(productId: string, qty: number) {
   try {
+    setAnimateItem(productId);
+    setTimeout(() => setAnimateItem(null), 300);
     await api.post("/cart/update", {
-      userId: USER_ID,
+      // userId: USER_ID,
       productId,
       quantity: qty,
     });
 
-    const cartRes = await api.get<CartMap>(`/cart/${USER_ID}`);
+    const cartRes = await api.get<CartMap>("/cart");
     setCart(cartRes.data || {});
   } catch (err) {
     console.error(err);
@@ -58,7 +62,7 @@ async function updateQty(productId: string, qty: number) {
 
   async function clearCart() {
     try {
-      await api.delete(`/cart/clear/${USER_ID}`);
+      await api.delete("/cart/clear");
       setCart({});
     } catch (err) {
       console.error(err);
@@ -90,7 +94,7 @@ async function updateQty(productId: string, qty: number) {
         <>
           <div className="cart-list">
             {items.map(({ productId, qty, price, name, subtotal }) => (
-              <div key={productId} className="cart-item">
+              <div key={productId} className="cart-item" style={{ animation: "slideIn 0.3s" }}>
                 <div className="left">
                   <div className="name">{name}</div>
                   <div className="price">₹{price.toFixed(2)}</div>
@@ -100,7 +104,7 @@ async function updateQty(productId: string, qty: number) {
                   <button className="qty-btn" onClick={() => updateQty(productId, qty - 1)}>
                     -
                   </button>
-                  <div className="qty">{qty}</div>
+                  <div className={`qty ${animateItem === productId ? "pop" : ""}`}>{qty}</div>
                   <button className="qty-btn" onClick={() => updateQty(productId, qty + 1)}>
                     +
                   </button>
@@ -130,7 +134,7 @@ async function updateQty(productId: string, qty: number) {
                 className="checkout"
                 onClick={async () => {
                   try {
-                    await api.post("/orders", { userId: USER_ID });
+                    await api.post("/orders");
                     alert("Order placed!");
                     await loadAll();
                   } catch (err) {

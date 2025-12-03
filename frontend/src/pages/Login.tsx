@@ -1,10 +1,17 @@
 import { useState } from "react";
 import api from "../api/axios";
+import { jwtDecode } from "jwt-decode";
 
 interface LoginResponse {
   token: string;
   email: string;
   role: string;
+}
+
+interface JwtPayload {
+  sub: string;  // user email
+  role: string;
+  userId: string; // make sure backend adds this!
 }
 
 export default function Login() {
@@ -32,6 +39,13 @@ export default function Login() {
       }
 
       localStorage.setItem("token", token); // Save token
+
+      // decode token
+      const decoded = jwtDecode<JwtPayload>(token);
+
+      // save userId in storage
+      localStorage.setItem("userId", decoded.userId);
+      
       window.location.href = "/products";   // Redirect
     } catch (err) {
       console.error(err);

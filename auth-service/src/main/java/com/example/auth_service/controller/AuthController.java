@@ -56,12 +56,13 @@ public class AuthController {
             return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
         }
 
-        String token = jwtUtil.generateToken(user.getEmail(), user.getRole());
+        String token = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
 
         return ResponseEntity.ok(Map.of(
                 "token", token,
                 "email", user.getEmail(),
-                "role", user.getRole()
+                "role", user.getRole(),
+                "userId", user.getId()
         ));
     }
 }

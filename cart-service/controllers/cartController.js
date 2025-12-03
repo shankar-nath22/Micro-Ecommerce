@@ -6,33 +6,29 @@ const cartKey = (userId) => `cart:${userId}`;
 
 // ADD to cart
 async function addToCart(req, res) {
-  const userId = req.body.userId;
-  const productId = req.body.productId;
-  const quantity = req.body.quantity || 1;
+  const userId = req.user && req.user.id;
+  if (!userId) return res.status(401).json({ error: "Unauthenticated" });
 
-  // validate product exists
+  const productId = req.body.productId;
+  const quantity = Number(req.body.quantity) || 1;
+
   const product = await getProduct(productId);
-  if (!product) {
-    return res.status(404).json({ error: "Product not found" });
-  }
+  if (!product) return res.status(404).json({ error: "Product not found" });
 
   const newQty = await redis.hincrby(cartKey(userId), productId, quantity);
 
-  // no negative qty
-  if (newQty <= 0) {
-    await redis.hdel(cartKey(userId), productId);
-  }
+  if (newQty <= 0) await redis.hdel(cartKey(userId), productId);
 
   return res.json({ message: "Item added to cart" });
 }
 
-// GET cart
+// GET cart (no userId from URL)
 async function getCart(req, res) {
-  const userId = req.params.userId;
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ error: "Unauthenticated" });
 
   const cart = await redis.hgetall(cartKey(userId));
 
-  // convert quantities to numbers
   const parsed = {};
   for (let p in cart) parsed[p] = Number(cart[p]);
 
@@ -41,7 +37,9 @@ async function getCart(req, res) {
 
 // REMOVE item
 async function removeItem(req, res) {
-  const userId = req.body.userId;
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ error: "Unauthenticated" });
+
   const productId = req.body.productId;
 
   await redis.hdel(cartKey(userId), productId);
@@ -49,20 +47,24 @@ async function removeItem(req, res) {
   return res.json({ message: "Item removed" });
 }
 
-// CLEAR cart
+// CLEAR cart (no params!)
 async function clearCart(req, res) {
-  const userId = req.params.userId;
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ error: "Unauthenticated" });
 
   await redis.del(cartKey(userId));
 
   return res.json({ message: "Cart cleared" });
 }
 
-
+// UPDATE quantity
 async function updateQuantity(req, res) {
-  const { userId, productId, quantity } = req.body;
+  const userId = req.user?.id;
+  if (!userId) return res.status(401).json({ error: "Unauthenticated" });
 
-  if (!userId || !productId) {
+  const { productId, quantity } = req.body;
+
+  if (!productId || quantity == null) {
     return res.status(400).json({ error: "Missing fields" });
   }
 
@@ -71,12 +73,9 @@ async function updateQuantity(req, res) {
     return res.json({ message: "Item removed" });
   }
 
-  // set new quantity
   await redis.hset(cartKey(userId), productId, quantity);
-
   return res.json({ message: "Quantity updated" });
 }
-
 
 module.exports = {
   addToCart,

@@ -3,6 +3,7 @@
   padding: 24px;
   color: #eaeaea;
   font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  animation: fadeIn 0.4s ease-out;
 }
 
 h1 {
@@ -23,13 +24,16 @@ h1 {
 
 .cart-item {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  background: #222;
+  align-items: center;
   padding: 12px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  margin: 10px 0;
+  background: #222;
+  border-radius: 10px;
+  animation: slideIn 0.35s ease-out;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
+
 
 .cart-item .left {
   flex: 1;
@@ -52,13 +56,20 @@ h1 {
 }
 
 .qty-btn {
+  padding: 6px 10px;
   height: 32px;
   width: 32px;
   border-radius: 6px;
   border: none;
-  background: #111;
+  background: #444;
   color: #fff;
   cursor: pointer;
+  transition: 0.2s;
+}
+
+.qty-btn:hover {
+  background: #666;
+  transform: scale(1.1);
 }
 
 .qty {
@@ -82,8 +93,14 @@ h1 {
   font-size: 12px;
   background: transparent;
   border: none;
-  color: #ff7a7a;
+  color: #ff7777;
+  transition: 0.2s;
   cursor: pointer;
+}
+
+.remove:hover {
+  color: red;
+  transform: scale(1.1);
 }
 
 .cart-footer {
@@ -113,4 +130,30 @@ h1 {
 }
 .checkout {
   background: #0b7df0;
+}
+
+
+.cart-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 15px rgba(255,255,255,0.15);
+}
+
+.pop {
+  animation: pop 0.25s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(15px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
 }

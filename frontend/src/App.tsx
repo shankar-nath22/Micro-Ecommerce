@@ -5,11 +5,13 @@ import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Navbar from "./components/Navbar";
+import { Toaster } from "react-hot-toast";
 
 export default function App() {
   return (
     <BrowserRouter>
       <Navbar />
+      <Toaster position="top-right" />
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Login />} />

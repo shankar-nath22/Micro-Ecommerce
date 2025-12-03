@@ -13,6 +13,7 @@ import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 
 @Component
 public class JwtGatewayFilter implements GlobalFilter, Ordered {
@@ -51,7 +52,8 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
         String token = authHeader.substring(7);
 
         try {
-            SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
+            // SecretKey key = Keys.hmacShaKeyFor(secret.getBytes());
+            SecretKey key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
 
             Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
@@ -60,11 +62,26 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
                     .getBody();
 
             System.out.println("✅ JWT validated for user: " + claims.getSubject());
+
+            String email = claims.getSubject();
+            String userId = claims.get("userId").toString(); // make sure token contains this
+            String role = claims.get("role", String.class);
+
+            if (userId == null) {
+                System.out.println("❌ JWT missing userId");
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
+
+            System.out.println("✅ JWT Valid | userId: " + userId);
+
             // 🔥 Forward token to downstream services
-            ServerWebExchange modifiedExchange = exchange.mutate()
-                .request(builder -> builder.header(HttpHeaders.AUTHORIZATION, authHeader))
-                .build();
-            return chain.filter(modifiedExchange);
+            ServerWebExchange mutated = exchange.mutate()
+                    .request(r -> r.header("X-USER-ID", userId == null ? "" : userId)
+                                  .header("X-USER-EMAIL", email == null ? "" : email)
+                                  .header("X-USER-ROLE", role == null ? "" : role))
+                    .build();
+            return chain.filter(mutated);
 
         } catch (Exception e) {
             System.out.println("❌ JWT validation failed: " + e.getMessage());

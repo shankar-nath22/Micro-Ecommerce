@@ -21,7 +21,7 @@ app.post("/cart/update", authenticate, updateQuantity);
 app.post("/cart/add", authenticate, addToCart);
 
 // Allow anyone to GET cart? maybe only owner -> authenticate and check userId
-app.get("/cart/:userId", authenticate, getCart);
+app.get("/cart", authenticate, getCart);
 
 // Remove/clear should be authenticated
 app.delete("/cart/remove", authenticate, removeItem);

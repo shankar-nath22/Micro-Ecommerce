@@ -4,6 +4,17 @@ const secret = process.env.JWT_SECRET ||
   "FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9";
 
 function authenticate(req, res, next) {
+
+  // 1) Prefer gateway-forwarded header X-USER-ID
+  const forwardedUserId = req.header("X-USER-ID");
+  const email = req.header("X-USER-EMAIL");
+  const role = req.header("X-USER-ROLE");
+  if (forwardedUserId) {
+    req.user = { id: forwardedUserId, email, role };
+    return next();
+  }
+  
+  // 2) Fallback: verify JWT itself (only if service is exposed to clients)
   const auth = req.headers['authorization'] || req.headers['Authorization'];
 
   if (!auth || !auth.startsWith('Bearer ')) {
@@ -20,7 +31,8 @@ function authenticate(req, res, next) {
 
     req.user = {
       email: payload.sub || payload.email,
-      role: payload.role
+      role: payload.role,
+      id: payload.userId
     };
 
     next();
