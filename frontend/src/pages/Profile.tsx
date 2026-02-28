@@ -100,8 +100,9 @@ export default function Profile() {
             confirmButtonColor: "#ef4444",
             cancelButtonColor: "#3b82f6",
             confirmButtonText: "Yes, delete it!",
-            background: "#1e293b",
-            color: "#f8fafc"
+            customClass: {
+                popup: 'swal-premium'
+            }
         });
 
         if (!result.isConfirmed) {

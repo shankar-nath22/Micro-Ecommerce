@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
+import { useThemeStore } from "../store/themeStore";
 import Swal from "sweetalert2";
 import "./Navbar.css";
 
@@ -10,6 +11,7 @@ export default function Navbar() {
   const userRole = useUserStore((state) => state.role);
   const userName = useUserStore((state) => state.name);
   const logout = useUserStore((state) => state.logout);
+  const { theme, toggleTheme } = useThemeStore();
   const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (e: React.FormEvent) => {
@@ -24,9 +26,14 @@ export default function Navbar() {
   return (
     <nav className="navbar glass-morphism">
       <div className="nav-container">
-        <Link to={token ? "/products" : "/"} className="nav-logo">
-          <span className="logo-accent">Micro</span>Ecom
-        </Link>
+        <div className="nav-left">
+          <Link to={token ? "/products" : "/"} className="nav-logo">
+            <span className="logo-accent">Micro</span>Ecom
+          </Link>
+          <button onClick={toggleTheme} className="theme-toggle" aria-label="Toggle theme">
+            {theme === 'dark' ? '☀️' : '🌙'}
+          </button>
+        </div>
 
         <div className="nav-links">
           {!token && (
@@ -73,15 +80,16 @@ export default function Navbar() {
                     confirmButtonColor: "#ef4444",
                     cancelButtonColor: "#3b82f6",
                     confirmButtonText: "Yes, logout",
-                    background: "#1e293b",
-                    color: "#f8fafc"
+                    customClass: {
+                      popup: 'swal-premium'
+                    }
                   });
                   if (result.isConfirmed) {
                     logout();
                     navigate("/");
                   }
                 }}
-                className="btn-logout"
+                className="logout-btn"
               >
                 Logout
               </button>

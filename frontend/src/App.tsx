@@ -11,8 +11,16 @@ import EditProduct from "./pages/EditProduct";
 import Profile from "./pages/Profile";
 import Navbar from "./components/Navbar";
 import { Toaster } from "react-hot-toast";
+import { useThemeStore } from "./store/themeStore";
+import { useEffect } from "react";
 
 export default function App() {
+  const theme = useThemeStore((state) => state.theme);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
   return (
     <BrowserRouter>
       <Navbar />
