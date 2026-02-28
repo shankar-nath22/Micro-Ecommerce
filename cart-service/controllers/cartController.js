@@ -24,7 +24,7 @@ async function addToCart(req, res) {
 
 // GET cart (no userId from URL)
 async function getCart(req, res) {
-  const userId = req.user?.id;
+  const userId = req.user.id;
   if (!userId) return res.status(401).json({ error: "Unauthenticated" });
 
   const cart = await redis.hgetall(cartKey(userId));
@@ -35,9 +35,18 @@ async function getCart(req, res) {
   res.json(parsed);
 }
 
+// Internal version using userId from params
+async function getCartInternal(req, res) {
+  const userId = req.params.userId;
+  const cart = await redis.hgetall(cartKey(userId));
+  const parsed = {};
+  for (let p in cart) parsed[p] = Number(cart[p]);
+  res.json(parsed);
+}
+
 // REMOVE item
 async function removeItem(req, res) {
-  const userId = req.user?.id;
+  const userId = req.user.id;
   if (!userId) return res.status(401).json({ error: "Unauthenticated" });
 
   const productId = req.body.productId;
@@ -49,7 +58,7 @@ async function removeItem(req, res) {
 
 // CLEAR cart (no params!)
 async function clearCart(req, res) {
-  const userId = req.user?.id;
+  const userId = req.user.id;
   if (!userId) return res.status(401).json({ error: "Unauthenticated" });
 
   await redis.del(cartKey(userId));
@@ -59,7 +68,7 @@ async function clearCart(req, res) {
 
 // UPDATE quantity
 async function updateQuantity(req, res) {
-  const userId = req.user?.id;
+  const userId = req.user.id;
   if (!userId) return res.status(401).json({ error: "Unauthenticated" });
 
   const { productId, quantity } = req.body;
@@ -77,10 +86,18 @@ async function updateQuantity(req, res) {
   return res.json({ message: "Quantity updated" });
 }
 
+async function clearCartInternal(req, res) {
+  const userId = req.params.userId;
+  await redis.del(cartKey(userId));
+  return res.json({ message: "Cart cleared" });
+}
+
 module.exports = {
   addToCart,
   getCart,
   removeItem,
   clearCart,
   updateQuantity,
+  getCartInternal,
+  clearCartInternal,
 };

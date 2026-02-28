@@ -28,14 +28,18 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange,
-                             org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
+            org.springframework.cloud.gateway.filter.GatewayFilterChain chain) {
 
         String path = exchange.getRequest().getPath().value();
-        System.out.println("🔥 Filter triggered for: " + path);
+        String method = exchange.getRequest().getMethod().name();
 
-        // ✨ Skip JWT validation for /auth/**
-        if (path.startsWith("/auth")) {
-            System.out.println("⏭ Skipping JWT check for auth routes");
+        // Skip JWT validation for public routes
+        boolean isPublicPath = path.startsWith("/auth")
+                || (path.startsWith("/products") && "GET".equalsIgnoreCase(method))
+                || (path.startsWith("/inventory/stock") && "GET".equalsIgnoreCase(method));
+
+        if (isPublicPath) {
+            System.out.println("⏭ Skipping JWT check for public routes: " + path);
             return chain.filter(exchange);
         }
 
@@ -75,11 +79,11 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
             System.out.println("✅ JWT Valid | userId: " + userId);
 
-            // 🔥 Forward token to downstream services
+            // Forward token to downstream services
             ServerWebExchange mutated = exchange.mutate()
                     .request(r -> r.header("X-USER-ID", userId == null ? "" : userId)
-                                  .header("X-USER-EMAIL", email == null ? "" : email)
-                                  .header("X-USER-ROLE", role == null ? "" : role))
+                            .header("X-USER-EMAIL", email == null ? "" : email)
+                            .header("X-USER-ROLE", role == null ? "" : role))
                     .build();
             return chain.filter(mutated);
 

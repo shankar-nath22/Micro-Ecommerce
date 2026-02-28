@@ -4,10 +4,13 @@ import com.example.product_service.model.Product;
 import com.example.product_service.repository.ProductRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/products")
@@ -18,14 +21,18 @@ public class ProductController {
 
     // CREATE
     @PostMapping
-    public ResponseEntity<Product> create(@RequestBody Product product) {
+    public ResponseEntity<?> create(@Valid @RequestBody Product product,
+            @RequestHeader(value = "X-USER-ROLE", required = false) String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only ADMIN can create products");
+        }
         return ResponseEntity.ok(repo.save(product));
     }
 
     // READ — Get all
     @GetMapping
     public ResponseEntity<List<Product>> getAll() {
-        return ResponseEntity.ok(repo.findAll());
+        return ResponseEntity.ok(repo.findByIsActiveTrue());
     }
 
     // READ — Get by ID (fixed)
@@ -38,8 +45,11 @@ public class ProductController {
 
     // UPDATE (fixed)
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable String id, @RequestBody Product updated) {
-
+    public ResponseEntity<?> update(@PathVariable String id, @Valid @RequestBody Product updated,
+            @RequestHeader(value = "X-USER-ROLE", required = false) String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only ADMIN can update products");
+        }
         return repo.findById(id)
                 .<ResponseEntity<?>>map(existing -> {
                     existing.setName(updated.getName());
@@ -54,9 +64,14 @@ public class ProductController {
 
     // DELETE (fixed)
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> delete(@PathVariable String id) {
+    public ResponseEntity<?> delete(@PathVariable String id,
+            @RequestHeader(value = "X-USER-ROLE", required = false) String role) {
+        if (!"ADMIN".equalsIgnoreCase(role)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only ADMIN can delete products");
+        }
         return repo.findById(id).map(p -> {
-            repo.delete(p);
+            p.setIsActive(false);
+            repo.save(p);
             return ResponseEntity.ok("Deleted");
         }).orElseGet(() -> ResponseEntity.status(404).body("Product not found"));
     }

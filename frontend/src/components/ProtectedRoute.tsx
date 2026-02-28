@@ -1,11 +1,12 @@
 import { Navigate } from "react-router-dom";
+import { useUserStore } from "../store/userStore";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
-  const token = localStorage.getItem("token");
+  const token = useUserStore((state) => state.token);
 
   if (!token) {
     return <Navigate to="/" replace />;

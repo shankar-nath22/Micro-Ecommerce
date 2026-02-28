@@ -17,7 +17,10 @@ public class User {
 
     private String role; // USER or ADMIN
 
-    public User() {}
+    private String refreshToken;
+
+    public User() {
+    }
 
     // Getters and setters
     public Long getId() {
@@ -50,5 +53,13 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
+    }
+
+    public String getRefreshToken() {
+        return refreshToken;
+    }
+
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }

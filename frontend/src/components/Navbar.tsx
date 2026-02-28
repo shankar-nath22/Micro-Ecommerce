@@ -1,42 +1,55 @@
 import { Link, useNavigate } from "react-router-dom";
+import { useUserStore } from "../store/userStore";
+import "./Navbar.css";
 
 export default function Navbar() {
   const navigate = useNavigate();
-  const token = localStorage.getItem("token");
-
-  function handleLogout() {
-    localStorage.removeItem("token");
-    navigate("/");
-  }
+  const token = useUserStore((state) => state.token);
+  const userRole = useUserStore((state) => state.role);
+  const logout = useUserStore((state) => state.logout);
 
   return (
-    <nav
-      style={{
-        display: "flex",
-        gap: "20px",
-        padding: "10px",
-        background: "#f2f2f2",
-        marginBottom: "20px",
-      }}
-    >
-      <Link to="/">Home</Link>
+    <nav className="navbar glass-morphism">
+      <div className="nav-container">
+        <Link to="/" className="nav-logo">
+          <span className="logo-accent">Micro</span>Ecom
+        </Link>
 
-      {!token && (
-        <>
-          <Link to="/">Login</Link>
-          <Link to="/signup">Signup</Link>
-        </>
-      )}
+        <div className="nav-links">
+          {!token && (
+            <>
+              <Link to="/" className="nav-link">Login</Link>
+              <Link to="/signup" className="nav-link signup-btn">Get Started</Link>
+            </>
+          )}
 
-      {token && (
-        <>
-          <Link to="/products">Products</Link>
-          <Link to="/cart">Cart</Link>
-          <button onClick={handleLogout} style={{ cursor: "pointer" }}>
-            Logout
-          </button>
-        </>
-      )}
+          {token && (
+            <>
+              <Link to="/products" className="nav-link">Products</Link>
+
+              {userRole === "USER" && (
+                <>
+                  <Link to="/orders" className="nav-link">Orders</Link>
+                  <Link to="/cart" className="nav-link cart-link">Cart</Link>
+                </>
+              )}
+
+              {userRole === "ADMIN" && (
+                <Link to="/admin" className="nav-link admin-link">Admin</Link>
+              )}
+              <button
+                onClick={() => {
+                  logout();
+                  navigate("/");
+                }}
+                className="logout-btn"
+              >
+                Logout
+              </button>
+            </>
+          )}
+        </div>
+      </div>
     </nav>
   );
 }

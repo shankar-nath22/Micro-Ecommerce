@@ -1,10 +1,10 @@
 package middleware
 
 import (
-	"net/http"
-	"strings"
 	"fmt"
+	"net/http"
 	"os"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
@@ -17,11 +17,7 @@ func getEnv(k, def string) string {
 	return def
 }
 
-// var JwtSecret = []byte(getEnv("JWT_SECRET",
-// 	"FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9",
-// ))
 var JwtSecret = []byte(os.Getenv("JWT_SECRET"))
-
 
 func Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -48,9 +44,11 @@ func Authenticate() gin.HandlerFunc {
 		claims := token.Claims.(jwt.MapClaims)
 		email := claims["sub"].(string)
 		role := claims["role"].(string)
+		userId := fmt.Sprintf("%v", claims["userId"])
 
 		c.Set("userEmail", email)
 		c.Set("userRole", role)
+		c.Set("userId", userId)
 
 		c.Next()
 	}

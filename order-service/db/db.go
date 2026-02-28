@@ -3,8 +3,9 @@ package db
 import (
 	"fmt"
 	"log"
+	"os"
 
-	"order-service/models"  // <-- important: import your models
+	"order-service/models" // <-- important: import your models
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -13,7 +14,10 @@ import (
 var DB *gorm.DB
 
 func Connect() {
-	dsn := "host=localhost user=postgres password=1234 dbname=order_db port=5433 sslmode=disable"
+	dsn := os.Getenv("DB_DSN")
+	if dsn == "" {
+		dsn = "host=order-db user=postgres password=1234 dbname=order_db port=5432 sslmode=disable"
+	}
 	var err error
 
 	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})

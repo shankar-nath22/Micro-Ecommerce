@@ -1,8 +1,9 @@
-// src/types/product.ts
 export interface Product {
-  id: number | string;
+  id: string;
   name: string;
+  description: string;
   price: number;
-  image?: string;
-  // add other fields your product has
+  stock?: number;
+  isActive?: boolean;
 }
+

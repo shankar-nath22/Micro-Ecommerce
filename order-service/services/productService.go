@@ -2,11 +2,18 @@ package services
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/go-resty/resty/v2"
 )
 
-var productServiceURL = "http://localhost:8082/products"
+func getProductServiceURL() string {
+	url := os.Getenv("PRODUCT_URL")
+	if url == "" {
+		return "http://product-service:8082"
+	}
+	return url
+}
 
 type Product struct {
 	ID    string  `json:"id"`
@@ -21,7 +28,7 @@ func GetProduct(id string) (*Product, error) {
 
 	_, err := client.R().
 		SetResult(&product).
-		Get(fmt.Sprintf("%s/%s", productServiceURL, id))
+		Get(fmt.Sprintf("%s/products/%s", getProductServiceURL(), id))
 
 	if err != nil {
 		return nil, err

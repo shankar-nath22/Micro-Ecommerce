@@ -1,0 +1,280 @@
+services:
+  # ------------------------------
+  # INFRASTRUCTURE
+  # ------------------------------
+  auth-db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5436:5432"
+    volumes:
+      - ./auth-data:/var/lib/postgresql/data
+    networks:
+      - ecom-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d auth_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  order-db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: order_db
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./order-data:/var/lib/postgresql/data
+    networks:
+      - ecom-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d order_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo-data:/data/db
+    networks:
+      - ecom-net
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - ecom-net
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    restart: always
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - ecom-net
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    hostname: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    restart: always
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - ecom-net
+
+  # ------------------------------
+  # NEW INFRASTRUCTURE
+  # ------------------------------
+  payment-db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: payment_db
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5435:5432"
+    volumes:
+      - ./payment-data:/var/lib/postgresql/data
+    networks:
+      - ecom-net
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d payment_db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  inventory-mongo:
+    image: mongo:latest
+    ports:
+      - "27018:27017"
+    volumes:
+      - ./inventory-mongo-data:/data/db
+    networks:
+      - ecom-net
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ------------------------------
+  # EXISTING SERVICES
+  # ------------------------------
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8081:8081"
+    restart: always
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
+      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+    depends_on:
+      auth-db:
+        condition: service_healthy
+    networks:
+      - ecom-net
+
+  product-service:
+    build: ./product-service
+    ports:
+      - "8082:8082"
+    restart: always
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/products_db
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - ecom-net
+
+  cart-service:
+    build: ./cart-service
+    ports:
+      - "8083:8083"
+    restart: always
+    environment:
+      REDIS_HOST: redis
+      PORT: 8083
+      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - ecom-net
+
+  order-service:
+    build: ./order-service
+    ports:
+      - "8084:8084"
+    restart: always
+    environment:
+      DB_DSN: "host=order-db user=postgres password=1234 dbname=order_db port=5432 sslmode=disable"
+      CART_URL: http://cart-service:8083
+      PRODUCT_URL: http://product-service:8082
+      KAFKA_BROKERS: kafka:9092
+      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+    depends_on:
+      order-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - ecom-net
+
+  # ------------------------------
+  # NEW SERVICES
+  # ------------------------------
+  payment-service:
+    build: ./payment-service
+    ports:
+      - "8085:8085"
+    restart: always
+    environment:
+      DB_DSN: "host=payment-db user=postgres password=1234 dbname=payment_db port=5432 sslmode=disable"
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      payment-db:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - ecom-net
+
+  inventory-service:
+    build: ./inventory-service
+    ports:
+      - "8086:8086"
+    restart: always
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://inventory-mongo:27017/inventory_db
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      inventory-mongo:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - ecom-net
+
+  notification-service:
+    build: ./notification-service
+    ports:
+      - "8087:8087"
+    restart: always
+    environment:
+      KAFKA_BROKERS: kafka:9092
+    depends_on:
+      kafka:
+        condition: service_started
+    networks:
+      - ecom-net
+
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      AUTH_URL: http://auth-service:8081
+      PRODUCT_URL: http://product-service:8082
+      CART_URL: http://cart-service:8083
+      ORDER_URL: http://order-service:8084
+      PAYMENT_URL: http://payment-service:8085
+      INVENTORY_URL: http://inventory-service:8086
+      NOTIFICATION_URL: http://notification-service:8087
+      REDIS_HOST: redis
+      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+    depends_on:
+      auth-service:
+        condition: service_started
+      product-service:
+        condition: service_started
+      cart-service:
+        condition: service_started
+      order-service:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      inventory-service:
+        condition: service_started
+      notification-service:
+        condition: service_started
+    networks:
+      - ecom-net
+
+networks:
+  ecom-net:
+    driver: bridge

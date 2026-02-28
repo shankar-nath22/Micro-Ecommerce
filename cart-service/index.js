@@ -1,6 +1,5 @@
 const express = require("express");
 const bodyParser = require("body-parser");
-const cors = require("cors");
 
 const {
   addToCart,
@@ -8,26 +7,33 @@ const {
   removeItem,
   clearCart,
   updateQuantity,
+  getCartInternal,
+  clearCartInternal,
 } = require("./controllers/cartController");
-
-const app = express();
-// app.use(cors());
-app.use(bodyParser.json());
 
 const { authenticate, requireRole } = require("./middleware/authMiddleware");
 
-app.post("/cart/update", authenticate, updateQuantity);
-// Protect add to cart (only authenticated users)
-app.post("/cart/add", authenticate, addToCart);
+const app = express();
+app.use(bodyParser.json());
 
-// Allow anyone to GET cart? maybe only owner -> authenticate and check userId
-app.get("/cart", authenticate, getCart);
+// All cart operations require a logged in USER
+app.post("/cart/add", authenticate, requireRole("USER"), addToCart);
+app.post("/cart/update", authenticate, requireRole("USER"), updateQuantity);
 
-// Remove/clear should be authenticated
-app.delete("/cart/remove", authenticate, removeItem);
-app.delete("/cart/clear/:userId", authenticate, clearCart);
+app.get("/cart", authenticate, requireRole("USER"), getCart);
 
-// Test endpoint
+// Internal endpoint for other services (no JWT required)
+app.get("/cart/:userId", getCartInternal);
+
+app.delete("/cart/remove", authenticate, requireRole("USER"), removeItem);
+
+// No userId param needed now—use req.user.id
+app.delete("/cart/clear", authenticate, requireRole("USER"), clearCart);
+
+// Internal clear endpoint
+app.delete("/cart/:userId", clearCartInternal);
+
+// health check
 app.get("/", (req, res) => {
   res.send("Cart service running!");
 });

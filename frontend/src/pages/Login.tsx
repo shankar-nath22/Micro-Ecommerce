@@ -1,6 +1,10 @@
 import { useState } from "react";
 import api from "../api/axios";
 import { jwtDecode } from "jwt-decode";
+import { Link, useNavigate } from "react-router-dom";
+import { useUserStore } from "../store/userStore";
+import toast from "react-hot-toast";
+import "./Auth.css";
 
 interface LoginResponse {
   token: string;
@@ -9,19 +13,21 @@ interface LoginResponse {
 }
 
 interface JwtPayload {
-  sub: string;  // user email
+  sub: string;
   role: string;
-  userId: string; // make sure backend adds this!
+  userId: string;
 }
 
 export default function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState(false);
+  const setUser = useUserStore((state) => state.setUser);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    setLoading(true);
 
     try {
       const res = await api.post<LoginResponse>("/auth/login", {
@@ -29,52 +35,67 @@ export default function Login() {
         password,
       });
 
-      console.log("Login response:", res.data);
-
       const token = res.data.token;
+      if (!token) throw new Error("Authentication failed");
 
-      if (!token) {
-        setError("No token in response");
-        return;
-      }
-
-      localStorage.setItem("token", token); // Save token
-
-      // decode token
       const decoded = jwtDecode<JwtPayload>(token);
-
-      // save userId in storage
       localStorage.setItem("userId", decoded.userId);
-      
-      window.location.href = "/products";   // Redirect
+
+      // 🔥 Store user info in Zustand (also sets token in localStorage)
+      setUser(token, res.data.role, res.data.email);
+
+      toast.success("Welcome back!");
+      navigate("/products");
     } catch (err) {
       console.error(err);
-      setError("Login failed. Invalid credentials.");
+      toast.error("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div>
-      <h2>Login</h2>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="auth-page">
+      <div className="auth-card premium-card glass-morphism">
+        <div className="auth-header">
+          <h1 className="auth-title">Welcome Back</h1>
+          <p className="auth-subtitle">Please enter your details to sign in</p>
+        </div>
 
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-        /><br />
+        <form className="auth-form" onSubmit={handleLogin}>
+          <div className="form-group">
+            <label>Email Address</label>
+            <input
+              className="auth-input"
+              type="email"
+              placeholder="name@company.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
 
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        /><br />
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              className="auth-input"
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
 
-        <button type="submit">Login</button>
-      </form>
+          <button className="auth-submit" type="submit" disabled={loading}>
+            {loading ? "Signing in..." : "Sign In"}
+          </button>
+        </form>
+
+        <div className="auth-footer">
+          Don't have an account? <Link to="/signup" className="auth-link">Sign Up</Link>
+        </div>
+      </div>
     </div>
   );
 }
