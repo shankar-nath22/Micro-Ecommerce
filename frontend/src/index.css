@@ -100,6 +100,13 @@ button {
   gap: 8px;
 }
 
+input,
+textarea {
+  color: var(--text-primary);
+  background-color: transparent;
+  font-family: inherit;
+}
+
 .glass-morphism {
   background: var(--glass-bg);
   backdrop-filter: blur(12px);

@@ -4,6 +4,7 @@ import api from "../api/axios";
 import { useUserStore } from "../store/userStore";
 import "./Products.css";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 interface Product {
   id: string; // Changed from number to string to match backend ID
@@ -132,7 +133,20 @@ export default function Products() {
                 <button
                   className="delete-btn"
                   onClick={async () => {
-                    if (window.confirm("Delete this product?")) {
+                    const result = await Swal.fire({
+                      title: "Delete Product?",
+                      text: "Are you sure you want to delete this product? This cannot be undone.",
+                      icon: "warning",
+                      showCancelButton: true,
+                      confirmButtonColor: "#ef4444",
+                      cancelButtonColor: "#3b82f6",
+                      confirmButtonText: "Yes, delete it",
+                      customClass: {
+                        popup: 'swal-premium'
+                      }
+                    });
+
+                    if (result.isConfirmed) {
                       try {
                         await api.delete(`/products/${p.id}`);
                         toast.success("Product deleted");

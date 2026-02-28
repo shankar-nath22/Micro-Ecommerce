@@ -13,7 +13,7 @@
 .admin-title {
     font-size: 2.5rem;
     margin-bottom: 40px;
-    background: linear-gradient(to right, #fff, var(--text-secondary));
+    background: linear-gradient(to right, var(--text-primary), var(--text-secondary));
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -38,10 +38,10 @@
 .admin-form .form-group input,
 .admin-form .form-group textarea {
     padding: 14px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--surface-color);
+    border: 1px solid var(--glass-border);
     border-radius: 8px;
-    color: white;
+    color: var(--text-primary);
     font-size: 1rem;
     transition: all 0.3s ease;
 }
@@ -50,7 +50,7 @@
 .admin-form .form-group textarea:focus {
     outline: none;
     border-color: var(--primary-color);
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--surface-accent);
 }
 
 .admin-submit {
@@ -73,4 +73,159 @@
 .admin-submit:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+}
+
+/* ========================================= */
+/* Inventory Table Styles                    */
+/* ========================================= */
+
+.admin-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.table-responsive {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.95rem;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.admin-table th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Light theme overrides for subtle table header bg */
+[data-theme="light"] .admin-table th {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.admin-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+[data-theme="light"] .admin-table tr:hover {
+    background: rgba(0, 0, 0, 0.02);
+}
+
+/* Sortable Headers */
+.sortable-header {
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sortable-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+[data-theme="light"] .sortable-header:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.sort-icon {
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.85rem;
+    transition: color 0.2s ease;
+}
+
+.sort-icon.inactive {
+    color: var(--glass-border);
+}
+
+[data-theme="light"] .sort-icon.inactive {
+    color: rgba(0, 0, 0, 0.2);
+}
+
+.sort-icon.active {
+    color: var(--primary-color);
+}
+
+/* Cell alignment */
+.product-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.actions-cell {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+/* Status Indicators */
+.warning-badge {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.low-stock-text {
+    color: #ef4444;
+    font-weight: 600;
+}
+
+.out-of-stock-text {
+    color: var(--text-dim);
+    font-weight: 600;
+    text-decoration: line-through;
+}
+
+/* Table Buttons */
+.action-btn {
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.edit-action {
+    background: rgba(99, 102, 241, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(99, 102, 241, 0.2);
+    text-decoration: none;
+}
+
+.edit-action:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.delete-action {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.2);
+}
+
+.delete-action:hover {
+    background: #ef4444;
+    color: white;
 }

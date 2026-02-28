@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import ProductDetails from "./pages/ProductDetails";
 import AdminDashboard from "./pages/AdminDashboard";
 import EditProduct from "./pages/EditProduct";
+import AddProduct from "./pages/AddProduct";
 import Profile from "./pages/Profile";
 import Navbar from "./components/Navbar";
 import { Toaster } from "react-hot-toast";
@@ -78,6 +79,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/add"
+          element={
+            <ProtectedRoute>
+              <AddProduct />
             </ProtectedRoute>
           }
         />

@@ -1,18 +1,69 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
 import { useThemeStore } from "../store/themeStore";
+import api from "../api/axios";
 import Swal from "sweetalert2";
 import "./Navbar.css";
 
+interface LowStockItem {
+  id: string;
+  name: string;
+  stock: number;
+}
+
 export default function Navbar() {
   const navigate = useNavigate();
+  const location = useLocation();
   const token = useUserStore((state) => state.token);
   const userRole = useUserStore((state) => state.role);
   const userName = useUserStore((state) => state.name);
   const logout = useUserStore((state) => state.logout);
   const { theme, toggleTheme } = useThemeStore();
   const [searchQuery, setSearchQuery] = useState("");
+
+  const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (userRole === "ADMIN") {
+      fetchLowStock();
+    }
+  }, [userRole, location.pathname]); // Refresh on navigation
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const fetchLowStock = async () => {
+    try {
+      const res = await api.get<any[]>("/products");
+
+      // Fetch accurate inventory for each product
+      const itemsWithStock = await Promise.all(
+        res.data.map(async (p) => {
+          let stock = p.stock || 0;
+          try {
+            const stockRes = await api.get(`/inventory/stock/${p.id}`);
+            stock = stockRes.data.quantity;
+          } catch (e) { }
+          return { id: p.id, name: p.name, stock };
+        })
+      );
+
+      const criticallyLow = itemsWithStock.filter(item => item.stock < 5);
+      setLowStockItems(criticallyLow);
+    } catch (err) {
+      console.error("Failed to fetch low stock alerts", err);
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +115,42 @@ export default function Navbar() {
               )}
 
               {userRole === "ADMIN" && (
-                <Link to="/admin" className="nav-link admin-link">Admin</Link>
+                <>
+                  <Link to="/admin" className="nav-link admin-link">Manage Inventory</Link>
+                  <div className="notification-container" ref={notifRef}>
+                    <button
+                      className="notification-bell"
+                      onClick={() => setShowNotifications(!showNotifications)}
+                      aria-label="Notifications"
+                    >
+                      🔔
+                      {lowStockItems.length > 0 && (
+                        <span className="notification-badge">{lowStockItems.length}</span>
+                      )}
+                    </button>
+
+                    {showNotifications && (
+                      <div className="notification-dropdown glass-morphism">
+                        <h4 className="dropdown-header">Low Stock Alerts</h4>
+                        {lowStockItems.length === 0 ? (
+                          <div className="dropdown-empty">All stock levels are healthy.</div>
+                        ) : (
+                          <div className="dropdown-list">
+                            {lowStockItems.map(item => (
+                              <div key={item.id} className="dropdown-item">
+                                <span className="item-name">{item.name}</span>
+                                <span className="item-stock">{item.stock} left</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <Link to="/admin" className="dropdown-footer" onClick={() => setShowNotifications(false)}>
+                          Review Inventory
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
 
               <Link to="/profile" className="nav-link profile-link">

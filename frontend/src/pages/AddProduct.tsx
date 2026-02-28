@@ -1,57 +1,20 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useState } from "react";
 import api from "../api/axios";
 import toast from "react-hot-toast";
 import { useUserStore } from "../store/userStore";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import "./AdminDashboard.css"; // Reuse existing styles
 
-export default function EditProduct() {
-    const { id } = useParams<{ id: string }>();
-    const navigate = useNavigate();
+export default function AddProduct() {
     const role = useUserStore((state) => state.role);
+    const navigate = useNavigate();
 
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
     const [imageUrl, setImageUrl] = useState("");
-    const [stock, setStock] = useState("0");
-    const [loading, setLoading] = useState(true);
-    const [updating, setUpdating] = useState(false);
-
-    useEffect(() => {
-        if (id) {
-            fetchProduct();
-        }
-    }, [id]);
-
-    const fetchProduct = async () => {
-        try {
-            const res = await api.get(`/products/${id}`);
-            setName(res.data.name);
-            setPrice(res.data.price.toString());
-            setDescription(res.data.description);
-            setImageUrl(res.data.imageUrl || "");
-
-            // Fetch inventory stock
-            try {
-                const stockRes = await api.get(`/inventory/stock/${id}`);
-                setStock(stockRes.data.quantity.toString());
-            } catch (stockErr: any) {
-                // If inventory-service returns 404 or fails, fallback to the product.stock
-                const backupStock = res.data.stock != null ? res.data.stock.toString() : "0";
-                setStock(backupStock);
-                console.error("Error fetching stock from inventory. Using product stock fallback.", stockErr);
-            }
-
-        } catch (err) {
-            console.error(err);
-            toast.error("Failed to load product");
-            navigate("/products");
-        } finally {
-            setLoading(false);
-        }
-    };
+    const [stock, setStock] = useState("10"); // Default stock
+    const [loading, setLoading] = useState(false);
 
     if (role !== "ADMIN") {
         return <Navigate to="/products" replace />;
@@ -59,44 +22,51 @@ export default function EditProduct() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setUpdating(true);
+        setLoading(true);
 
         try {
             const parsedStock = Number(stock) || 0;
 
-            // Update product
-            await api.put(`/products/${id}`, {
+            // 1. Create Product
+            const res = await api.post("/products", {
                 name,
                 price: parseFloat(price) || 0,
                 description,
                 imageUrl,
-                stock: parsedStock,
+                stock: parsedStock, // Send to product DB too just in case
             });
 
-            // Update inventory
+            const productId = res.data.id;
+
+            // 2. Set Initial Stock in Inventory Service
             await api.post("/inventory/stock", {
-                productId: id,
+                productId: productId,
                 quantity: parsedStock
             });
 
-            toast.success("Product and Inventory updated successfully!");
-            navigate("/products");
+            toast.success("Product and Inventory added successfully!");
+            navigate("/admin");
         } catch (err) {
             console.error(err);
-            toast.error("Failed to update product");
+            toast.error("Failed to add product");
         } finally {
-            setUpdating(false);
+            setLoading(false);
         }
     };
-
-    if (loading) {
-        return <div className="admin-root"><div className="admin-container">Loading...</div></div>;
-    }
 
     return (
         <div className="admin-root">
             <div className="admin-container">
-                <h1 className="admin-title">Edit Product</h1>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "40px" }}>
+                    <h1 className="admin-title" style={{ marginBottom: 0 }}>Add New Product</h1>
+                    <button
+                        className="admin-submit"
+                        style={{ marginTop: 0, padding: "8px 16px", fontSize: "1rem" }}
+                        onClick={() => navigate("/admin")}
+                    >
+                        Back to Inventory
+                    </button>
+                </div>
 
                 <div className="admin-card premium-card glass-morphism">
                     <form className="admin-form" onSubmit={handleSubmit}>
@@ -133,12 +103,12 @@ export default function EditProduct() {
                         </div>
 
                         <div className="form-group">
-                            <label>Stock Quantity</label>
+                            <label>Initial Stock Quantity</label>
                             <input
                                 type="number"
                                 value={stock}
                                 onChange={(e) => setStock(e.target.value)}
-                                placeholder="0"
+                                placeholder="10"
                                 required
                                 min="0"
                             />
@@ -155,8 +125,8 @@ export default function EditProduct() {
                             />
                         </div>
 
-                        <button className="admin-submit" type="submit" disabled={updating}>
-                            {updating ? "Updating..." : "Update Product"}
+                        <button className="admin-submit" type="submit" disabled={loading}>
+                            {loading ? "Adding Product..." : "Add Product"}
                         </button>
                     </form>
                 </div>
