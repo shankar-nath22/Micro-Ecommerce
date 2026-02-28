@@ -24,16 +24,19 @@ public class Product {
     @NotNull(message = "Stock is required")
     @Min(value = 0, message = "Stock cannot be negative")
     private Integer stock;
+
+    private String imageUrl;
     private Boolean isActive = true; // Default to true for new products
 
     public Product() {
     }
 
-    public Product(String name, String description, Double price, Integer stock) {
+    public Product(String name, String description, Double price, Integer stock, String imageUrl) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
+        this.imageUrl = imageUrl;
         this.isActive = true;
     }
 
@@ -44,6 +47,14 @@ public class Product {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public String getId() {

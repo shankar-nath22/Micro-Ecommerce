@@ -12,6 +12,7 @@ export default function AdminDashboard() {
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
+    const [imageUrl, setImageUrl] = useState("");
     const [stock, setStock] = useState("10"); // Default stock
     const [loading, setLoading] = useState(false);
 
@@ -30,6 +31,7 @@ export default function AdminDashboard() {
                 name,
                 price: parseFloat(price),
                 description,
+                imageUrl,
                 stock: parseInt(stock, 10), // Send to product DB too just in case
             });
 
@@ -45,6 +47,7 @@ export default function AdminDashboard() {
             setName("");
             setPrice("");
             setDescription("");
+            setImageUrl("");
             setStock("10");
         } catch (err) {
             console.error(err);
@@ -70,6 +73,16 @@ export default function AdminDashboard() {
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Enter product name"
                                 required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Image URL</label>
+                            <input
+                                type="url"
+                                value={imageUrl}
+                                onChange={(e) => setImageUrl(e.target.value)}
+                                placeholder="https://example.com/image.jpg"
                             />
                         </div>
 

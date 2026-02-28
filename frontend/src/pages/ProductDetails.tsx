@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
-import Navbar from "../components/Navbar";
+import "./ProductDetails.css";
 
 interface Product {
     id: string;
@@ -22,6 +22,7 @@ export default function ProductDetails() {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const token = useUserStore((state) => state.token);
+    const userRole = useUserStore((state) => state.role);
 
     const [product, setProduct] = useState<Product | null>(null);
     const [stockLevel, setStockLevel] = useState<number | null>(null);
@@ -89,90 +90,113 @@ export default function ProductDetails() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center text-gray-400">Loading product...</div>;
-    if (error || !product) return <div className="p-8 text-center text-red-500">{error || "Product not found"}</div>;
+    if (loading) return <div className="details-loading">Loading product...</div>;
+    if (error || !product) return <div className="details-error">{error || "Product not found"}</div>;
 
     const isOutOfStock = stockLevel === 0;
     const isLowStock = stockLevel !== null && stockLevel > 0 && stockLevel <= 5;
 
     return (
-        <div className="min-h-screen bg-gray-900 text-white">
-            <Navbar />
-
-            <div className="max-w-4xl mx-auto p-4 sm:p-8 mt-8">
+        <div className="product-details-page">
+            <div className="details-container">
                 {!product.isActive && (
-                    <div className="bg-red-900/50 border border-red-500 text-red-200 px-6 py-4 rounded-xl mb-6 text-center shadow-[0_0_15px_rgba(239,68,68,0.2)]">
-                        <h3 className="font-bold text-lg mb-1">Item Unavailable</h3>
-                        <p>This product has been removed and is no longer available for purchase.</p>
+                    <div className="inactive-banner">
+                        <svg className="icon" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        <span>Item Unavailable: This product is no longer active.</span>
                     </div>
                 )}
 
-                <div className="bg-gray-800/50 backdrop-blur-xl border border-gray-700/50 rounded-2xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
-                    <div className="md:w-1/2 p-8 flex items-center justify-center bg-gray-800/30">
-                        {product.imageUrl ? (
-                            <img
-                                src={product.imageUrl}
-                                alt={product.name}
-                                className="w-full h-auto object-cover rounded-xl shadow-lg transform transition-transform duration-500 hover:scale-105"
-                            />
-                        ) : (
-                            <div className="w-full aspect-square bg-gray-700/30 rounded-xl flex items-center justify-center border border-gray-600/30">
-                                <span className="text-gray-500 flex flex-col items-center">
-                                    <svg className="w-12 h-12 mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    No Image
-                                </span>
+                <div className="details-content-card">
+                    <div className="details-layout">
+                        {/* LEFT COLUMN: Image */}
+                        <div className="details-image-section">
+                            <div className="image-wrapper">
+                                {product.imageUrl ? (
+                                    <img src={product.imageUrl} alt={product.name} className="product-image" />
+                                ) : (
+                                    <div className="no-image-placeholder">
+                                        <svg className="icon placeholder-icon" width="80" height="80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        <span>Image Not Available</span>
+                                    </div>
+                                )}
                             </div>
-                        )}
-                    </div>
-
-                    <div className="md:w-1/2 p-8 flex flex-col justify-center">
-                        <div className="flex justify-between items-start mb-4">
-                            <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">{product.name}</h1>
-                            <span className="text-3xl font-light text-primary-400">${product.price.toFixed(2)}</span>
                         </div>
 
-                        <p className="text-gray-400 text-lg mb-8 leading-relaxed">
-                            {product.description || "No description available for this product."}
-                        </p>
+                        {/* RIGHT COLUMN: Details */}
+                        <div className="details-info-section">
+                            <div className="brand-tag">MicroEcom Exclusive</div>
+                            <h1 className="product-title">{product.name}</h1>
 
-                        {product.isActive && (
-                            <div className="mb-6">
-                                {isOutOfStock && (
-                                    <div className="text-red-400 font-medium bg-red-900/20 py-2 px-4 rounded-lg inline-block border border-red-500/20">
-                                        ❌ Out of Stock
+                            <div className="price-container">
+                                <span className="product-price">₹{product.price.toLocaleString("en-IN")}</span>
+                            </div>
+
+                            <hr className="divider" />
+
+                            <div className="description-block">
+                                <h3>
+                                    <svg className="icon" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                                    Product Description
+                                </h3>
+                                <p className="product-desc-text">
+                                    {product.description || "No description provided for this item."}
+                                </p>
+                            </div>
+
+                            {/* Stock Readiness */}
+                            {product.isActive && (
+                                <div className="availability-block">
+                                    <h3 className="availability-label">Availability</h3>
+                                    <div className="stock-status-container">
+                                        {isOutOfStock && (
+                                            <div className="status-badge out-of-stock">
+                                                <svg className="icon" width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"></path></svg>
+                                                Sold Out
+                                            </div>
+                                        )}
+                                        {isLowStock && (
+                                            <div className="status-badge low-stock">
+                                                <svg className="icon" width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd"></path></svg>
+                                                Hurry! Only {stockLevel} remaining
+                                            </div>
+                                        )}
+                                        {stockLevel !== null && stockLevel > 5 && (
+                                            <div className="status-badge in-stock">
+                                                <svg className="icon" width="20" height="20" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"></path></svg>
+                                                In Stock
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Cart Actions */}
+                            <div className="actions-block">
+                                {product.isActive && userRole !== "ADMIN" && (
+                                    <button
+                                        className={`add-to-cart-btn ${isOutOfStock ? 'disabled' : ''}`}
+                                        onClick={handleAddToCart}
+                                        disabled={isOutOfStock}
+                                    >
+                                        <svg className="btn-icon" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                                        {isOutOfStock ? "Unavailable" : "Add to Cart"}
+                                    </button>
+                                )}
+
+                                {userRole === "ADMIN" && (
+                                    <div className="admin-warning-badge">
+                                        <svg className="icon" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span>Admins cannot purchase items directly.</span>
                                     </div>
                                 )}
-                                {isLowStock && (
-                                    <div className="text-orange-400 font-medium bg-orange-900/20 py-2 px-4 rounded-lg inline-block border border-orange-500/20 animate-pulse">
-                                        ⚠️ Hurry! Only {stockLevel} items left in stock.
-                                    </div>
-                                )}
-                                {stockLevel !== null && stockLevel > 5 && (
-                                    <div className="text-green-400 font-medium">
-                                        ✓ In Stock
+
+                                {success && (
+                                    <div className="success-toast fade-in">
+                                        <svg className="icon" width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        {success}
                                     </div>
                                 )}
                             </div>
-                        )}
-
-                        <div className="mt-auto space-y-4">
-                            {product.isActive && (
-                                <button
-                                    onClick={handleAddToCart}
-                                    disabled={isOutOfStock}
-                                    className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 transform active:scale-[0.98] ${isOutOfStock
-                                            ? "bg-gray-700 text-gray-500 cursor-not-allowed"
-                                            : "bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-500 hover:to-primary-400 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] text-white"
-                                        }`}
-                                >
-                                    {isOutOfStock ? "Unavailable" : "Add to Cart"}
-                                </button>
-                            )}
-                            {success && (
-                                <div className="bg-green-500/10 border border-green-500/20 text-green-400 text-center py-3 rounded-xl animate-fade-in">
-                                    ✓ {success}
-                                </div>
-                            )}
                         </div>
                     </div>
                 </div>

@@ -14,6 +14,7 @@ export default function EditProduct() {
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
+    const [imageUrl, setImageUrl] = useState("");
     const [stock, setStock] = useState("0");
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -30,6 +31,7 @@ export default function EditProduct() {
             setName(res.data.name);
             setPrice(res.data.price.toString());
             setDescription(res.data.description);
+            setImageUrl(res.data.imageUrl || "");
 
             // Fetch inventory stock
             try {
@@ -66,6 +68,7 @@ export default function EditProduct() {
                 name,
                 price: parseFloat(price),
                 description,
+                imageUrl,
                 stock: parseInt(stock, 10),
             });
 
@@ -104,6 +107,16 @@ export default function EditProduct() {
                                 onChange={(e) => setName(e.target.value)}
                                 placeholder="Enter product name"
                                 required
+                            />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Image URL</label>
+                            <input
+                                type="url"
+                                value={imageUrl}
+                                onChange={(e) => setImageUrl(e.target.value)}
+                                placeholder="https://example.com/image.jpg"
                             />
                         </div>
 

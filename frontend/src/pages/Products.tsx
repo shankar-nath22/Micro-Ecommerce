@@ -10,6 +10,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  imageUrl?: string;
 }
 
 export default function Products() {
@@ -70,8 +71,18 @@ export default function Products() {
       <div className="product-grid">
         {products.map((p) => (
           <div className="product-card premium-card" key={p.id}>
-            <div className="image-placeholder">
-              {p.name.charAt(0)}
+            <div className="image-container">
+              {p.imageUrl ? (
+                <img
+                  src={p.imageUrl}
+                  alt={p.name}
+                  className="product-image"
+                />
+              ) : (
+                <div className="image-placeholder">
+                  {p.name.charAt(0)}
+                </div>
+              )}
             </div>
 
             <div className="product-info">
