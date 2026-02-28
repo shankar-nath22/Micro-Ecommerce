@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
+import Swal from "sweetalert2";
 import "./Navbar.css";
 
 export default function Navbar() {
@@ -23,7 +24,7 @@ export default function Navbar() {
   return (
     <nav className="navbar glass-morphism">
       <div className="nav-container">
-        <Link to="/" className="nav-logo">
+        <Link to={token ? "/products" : "/"} className="nav-logo">
           <span className="logo-accent">Micro</span>Ecom
         </Link>
 
@@ -48,11 +49,6 @@ export default function Navbar() {
                 <button type="submit" className="search-btn">🔍</button>
               </form>
 
-              <Link to="/products" className="nav-link">Products</Link>
-              <Link to="/profile" className="nav-link profile-link">
-                {userName ? `Hi, ${userName.split(' ')[0]}` : "Profile"}
-              </Link>
-
               {userRole === "USER" && (
                 <>
                   <Link to="/orders" className="nav-link">Orders</Link>
@@ -63,12 +59,29 @@ export default function Navbar() {
               {userRole === "ADMIN" && (
                 <Link to="/admin" className="nav-link admin-link">Admin</Link>
               )}
+
+              <Link to="/profile" className="nav-link profile-link">
+                {userName ? `Hi, ${userName.split(' ')[0]}` : "Profile"}
+              </Link>
               <button
-                onClick={() => {
-                  logout();
-                  navigate("/");
+                onClick={async () => {
+                  const result = await Swal.fire({
+                    title: "Ready to leave?",
+                    text: "You will need to manually sign back in next time.",
+                    icon: "question",
+                    showCancelButton: true,
+                    confirmButtonColor: "#ef4444",
+                    cancelButtonColor: "#3b82f6",
+                    confirmButtonText: "Yes, logout",
+                    background: "#1e293b",
+                    color: "#f8fafc"
+                  });
+                  if (result.isConfirmed) {
+                    logout();
+                    navigate("/");
+                  }
                 }}
-                className="logout-btn"
+                className="btn-logout"
               >
                 Logout
               </button>

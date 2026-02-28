@@ -1,6 +1,8 @@
 import { useState } from "react";
 import api from "../api/axios";
+import { jwtDecode } from "jwt-decode";
 import { Link, useNavigate } from "react-router-dom";
+import { useUserStore } from "../store/userStore";
 import toast from "react-hot-toast";
 import "./Auth.css";
 
@@ -8,6 +10,8 @@ export default function Signup() {
   const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [showPassword, setShowPassword] = useState(false);
   const [name, setName] = useState<string>("");
   const [age, setAge] = useState<number | "">("");
   const [gender, setGender] = useState<string>("");
@@ -15,9 +19,29 @@ export default function Signup() {
   const [address, setAddress] = useState<string>("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(false);
+  const setUser = useUserStore((state) => state.setUser);
+
+  // Interfaces for decoding the login token
+  interface LoginResponse {
+    token: string;
+    email: string;
+    name: string;
+    role: string;
+  }
+
+  interface JwtPayload {
+    sub: string;
+    role: string;
+    userId: string;
+  }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error("Passwords do not match!");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -31,11 +55,25 @@ export default function Signup() {
         address,
         role: isAdmin ? "ADMIN" : "USER"
       });
-      toast.success("Account created! Please sign in.");
-      navigate("/");
-    } catch (err) {
+
+      // Auto-authenticate right after signup
+      const loginRes = await api.post<LoginResponse>("/auth/login", {
+        email,
+        password,
+      });
+
+      const token = loginRes.data.token;
+      if (!token) throw new Error("Auto-authentication failed");
+
+      const decoded = jwtDecode<JwtPayload>(token);
+      localStorage.setItem("userId", decoded.userId);
+      setUser(token, loginRes.data.role, loginRes.data.email, loginRes.data.name);
+
+      toast.success("Account created and you are now logged in!");
+      navigate("/products");
+    } catch (err: any) {
       console.error(err);
-      toast.error("Signup failed. Try again.");
+      toast.error(err.response?.data?.error || "Signup failed. Try again.");
     } finally {
       setLoading(false);
     }
@@ -127,14 +165,38 @@ export default function Signup() {
 
           <div className="form-group">
             <label>Password</label>
-            <input
-              className="auth-input"
-              type="password"
-              placeholder="Create a strong password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
+            <div className="password-container">
+              <input
+                className="auth-input password-input"
+                type={showPassword ? "text" : "password"}
+                placeholder="Create a strong password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <button
+                type="button"
+                className="password-toggle"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label>Confirm Password</label>
+            <div className="password-container">
+              <input
+                className="auth-input password-input"
+                type={showPassword ? "text" : "password"}
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+              />
+            </div>
           </div>
 
           <div className="form-group checkbox-group">

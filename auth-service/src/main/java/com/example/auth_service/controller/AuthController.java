@@ -160,4 +160,27 @@ public class AuthController {
 
         return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
     }
+
+    @DeleteMapping("/profile")
+    public ResponseEntity<?> deleteProfile(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
+        }
+
+        String email = jwtUtil.extractClaims(token).getSubject();
+        User user = repo.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        repo.delete(user);
+
+        return ResponseEntity.ok(Map.of("message", "Account deleted successfully"));
+    }
 }
