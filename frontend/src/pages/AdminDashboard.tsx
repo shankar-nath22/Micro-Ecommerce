@@ -5,6 +5,8 @@ import { useUserStore } from "../store/userStore";
 import { Navigate, useNavigate, Link, useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import "./AdminDashboard.css";
+import EditProductModal from "../components/EditProductModal";
+import AddProductModal from "../components/AddProductModal";
 
 interface Product {
     id: string; // From product service
@@ -25,11 +27,21 @@ export default function AdminDashboard() {
     const [sortColumn, setSortColumn] = useState<SortColumn>('stock');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
+    const [editingProductId, setEditingProductId] = useState<string | null>(null);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+
     const [searchParams, setSearchParams] = useSearchParams();
     const initialPage = parseInt(searchParams.get("page") || "1", 10);
 
     const [currentPage, setCurrentPage] = useState(initialPage > 0 ? initialPage : 1);
+    const [pageInput, setPageInput] = useState(currentPage.toString());
     const itemsPerPage = 10;
+
+    // Keep input in sync with page changes (Next/Prev buttons)
+    useEffect(() => {
+        setPageInput(currentPage.toString());
+    }, [currentPage]);
 
     // Sync state changes to URL
     useEffect(() => {
@@ -147,7 +159,7 @@ export default function AdminDashboard() {
                     <button
                         className="admin-submit"
                         style={{ marginTop: 0 }}
-                        onClick={() => navigate("/admin/add")}
+                        onClick={() => setIsAddModalOpen(true)}
                     >
                         + Add New Product
                     </button>
@@ -194,9 +206,15 @@ export default function AdminDashboard() {
                                                         </td>
                                                         <td>
                                                             <div className="actions-cell">
-                                                                <Link to={`/admin/edit/${p.id}`} className="action-btn edit-action">
+                                                                <button
+                                                                    onClick={() => {
+                                                                        setEditingProductId(p.id);
+                                                                        setIsEditModalOpen(true);
+                                                                    }}
+                                                                    className="action-btn edit-action"
+                                                                >
                                                                     Edit
-                                                                </Link>
+                                                                </button>
                                                                 <button
                                                                     onClick={() => handleDelete(p.id)}
                                                                     className="action-btn delete-action"
@@ -221,9 +239,26 @@ export default function AdminDashboard() {
                                 >
                                     Previous
                                 </button>
-                                <span className="pagination-info">
-                                    Page {currentPage} of {Math.ceil(products.length / itemsPerPage)}
-                                </span>
+                                <div className="pagination-jump">
+                                    <span>Page</span>
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={Math.ceil(products.length / itemsPerPage)}
+                                        value={pageInput}
+                                        onChange={(e) => {
+                                            const valStr = e.target.value;
+                                            setPageInput(valStr);
+                                            const val = parseInt(valStr, 10);
+                                            if (!isNaN(val) && val > 0 && val <= Math.ceil(products.length / itemsPerPage)) {
+                                                setCurrentPage(val);
+                                            }
+                                        }}
+                                        onBlur={() => setPageInput(currentPage.toString())}
+                                        className="pagination-input"
+                                    />
+                                    <span>of {Math.ceil(products.length / itemsPerPage)}</span>
+                                </div>
                                 <button
                                     onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(products.length / itemsPerPage)))}
                                     disabled={currentPage >= Math.ceil(products.length / itemsPerPage)}
@@ -236,6 +271,26 @@ export default function AdminDashboard() {
                     </>
                 )}
             </div>
+
+            {isEditModalOpen && editingProductId && (
+                <EditProductModal
+                    productId={editingProductId}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setEditingProductId(null);
+                    }}
+                    onSuccess={() => {
+                        fetchInventory();
+                    }}
+                />
+            )}
+
+            {isAddModalOpen && (
+                <AddProductModal
+                    onClose={() => setIsAddModalOpen(false)}
+                    onSuccess={() => fetchInventory()}
+                />
+            )}
         </div>
     );
 }

@@ -5,6 +5,7 @@ import { useUserStore } from "../store/userStore";
 import "./Products.css";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
+import EditProductModal from "../components/EditProductModal";
 
 interface Product {
   id: string; // Changed from number to string to match backend ID
@@ -21,12 +22,19 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [animating, setAnimating] = useState<string | null>(null);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get("search");
   const initialPage = parseInt(searchParams.get("page") || "1", 10);
 
   const [currentPage, setCurrentPage] = useState(initialPage > 0 ? initialPage : 1);
+  const [pageInput, setPageInput] = useState(currentPage.toString());
   const itemsPerPage = 12;
+
+  useEffect(() => {
+    setPageInput(currentPage.toString());
+  }, [currentPage]);
 
   // Sync state changes to URL
   useEffect(() => {
@@ -41,6 +49,10 @@ export default function Products() {
   }, [currentPage, setSearchParams, searchParams]);
 
   useEffect(() => {
+    fetchProducts();
+  }, [searchQuery]);
+
+  const fetchProducts = () => {
     setLoading(true);
     const url = searchQuery ? `/products?name=${encodeURIComponent(searchQuery)}` : "/products";
     api
@@ -58,7 +70,7 @@ export default function Products() {
         toast.error("Failed to fetch products");
         setLoading(false);
       });
-  }, [searchQuery]);
+  };
 
   async function addToCart(productId: string) {
     setAnimating(productId);
@@ -149,9 +161,15 @@ export default function Products() {
 
               {userRole === "ADMIN" && (
                 <div className="admin-actions">
-                  <Link to={`/admin/edit/${p.id}`} className="edit-btn">
+                  <button
+                    onClick={() => {
+                      setEditingProductId(p.id);
+                      setIsEditModalOpen(true);
+                    }}
+                    className="edit-btn"
+                  >
                     Edit
-                  </Link>
+                  </button>
                   <button
                     className="delete-btn"
                     onClick={async () => {
@@ -199,9 +217,27 @@ export default function Products() {
           >
             Previous
           </button>
-          <span className="pagination-info">
-            Page {currentPage} of {Math.ceil(products.length / itemsPerPage)}
-          </span>
+          <div className="pagination-jump">
+            <span>Page</span>
+            <input
+              type="number"
+              min="1"
+              max={Math.ceil(products.length / itemsPerPage)}
+              value={pageInput}
+              onChange={(e) => {
+                const valStr = e.target.value;
+                setPageInput(valStr);
+                const val = parseInt(valStr, 10);
+                if (!isNaN(val) && val > 0 && val <= Math.ceil(products.length / itemsPerPage)) {
+                  setCurrentPage(val);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+              }}
+              onBlur={() => setPageInput(currentPage.toString())}
+              className="pagination-input"
+            />
+            <span>of {Math.ceil(products.length / itemsPerPage)}</span>
+          </div>
           <button
             onClick={() => {
               setCurrentPage(prev => Math.min(prev + 1, Math.ceil(products.length / itemsPerPage)));
@@ -213,6 +249,18 @@ export default function Products() {
             Next
           </button>
         </div>
+      )}
+      {isEditModalOpen && editingProductId && (
+        <EditProductModal
+          productId={editingProductId}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditingProductId(null);
+          }}
+          onSuccess={() => {
+            fetchProducts();
+          }}
+        />
       )}
     </div>
   );
