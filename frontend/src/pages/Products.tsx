@@ -21,8 +21,24 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [animating, setAnimating] = useState<string | null>(null);
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const searchQuery = searchParams.get("search");
+  const initialPage = parseInt(searchParams.get("page") || "1", 10);
+
+  const [currentPage, setCurrentPage] = useState(initialPage > 0 ? initialPage : 1);
+  const itemsPerPage = 12;
+
+  // Sync state changes to URL
+  useEffect(() => {
+    const currentParams = Object.fromEntries([...searchParams]);
+    if (currentPage > 1) {
+      setSearchParams({ ...currentParams, page: currentPage.toString() }, { replace: true });
+    } else {
+      const newParams = { ...currentParams };
+      delete newParams.page;
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [currentPage, setSearchParams, searchParams]);
 
   useEffect(() => {
     setLoading(true);
@@ -32,6 +48,10 @@ export default function Products() {
       .then((res) => {
         setProducts(res.data);
         setLoading(false);
+        // Only reset to 1 if we're doing a totally new search query
+        if (searchQuery && searchParams.get("page") === null) {
+          setCurrentPage(1);
+        }
       })
       .catch((err) => {
         console.error(err);
@@ -88,82 +108,112 @@ export default function Products() {
       )}
 
       <div className="product-grid">
-        {products.map((p) => (
-          <div className="product-card premium-card" key={p.id}>
-            <div className="image-container">
-              {p.imageUrl ? (
-                <img
-                  src={p.imageUrl}
-                  alt={p.name}
-                  className="product-image"
-                />
-              ) : (
-                <div className="image-placeholder">
-                  {p.name.charAt(0)}
+        {products
+          .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+          .map((p) => (
+            <div className="product-card premium-card" key={p.id}>
+              <div className="image-container">
+                {p.imageUrl ? (
+                  <img
+                    src={p.imageUrl}
+                    alt={p.name}
+                    className="product-image"
+                  />
+                ) : (
+                  <div className="image-placeholder">
+                    {p.name.charAt(0)}
+                  </div>
+                )}
+              </div>
+
+              <div className="product-info">
+                <Link to={`/products/${p.id}`} className="product-name-link">
+                  <h3 className="product-name">{p.name}</h3>
+                </Link>
+                <p className="product-price">₹{p.price.toLocaleString()}</p>
+              </div>
+
+              {userRole !== "ADMIN" && (
+                <button
+                  className={`add-btn ${animating === p.id ? "added" : ""} ${p.stock === 0 ? "out-of-stock" : ""}`}
+                  onClick={() => addToCart(String(p.id))}
+                  disabled={animating === p.id || p.stock === 0}
+                >
+                  {p.stock === 0
+                    ? "Out of Stock"
+                    : animating === p.id
+                      ? "✔ In Cart"
+                      : "Add to Cart"}
+                </button>
+              )}
+
+              {userRole === "ADMIN" && (
+                <div className="admin-actions">
+                  <Link to={`/admin/edit/${p.id}`} className="edit-btn">
+                    Edit
+                  </Link>
+                  <button
+                    className="delete-btn"
+                    onClick={async () => {
+                      const result = await Swal.fire({
+                        title: "Delete Product?",
+                        text: "Are you sure you want to delete this product? This cannot be undone.",
+                        icon: "warning",
+                        showCancelButton: true,
+                        confirmButtonColor: "#ef4444",
+                        cancelButtonColor: "#3b82f6",
+                        confirmButtonText: "Yes, delete it",
+                        customClass: {
+                          popup: 'swal-premium'
+                        }
+                      });
+
+                      if (result.isConfirmed) {
+                        try {
+                          await api.delete(`/products/${p.id}`);
+                          toast.success("Product deleted");
+                          setProducts(products.filter(item => item.id !== p.id));
+                        } catch (err) {
+                          toast.error("Failed to delete product");
+                        }
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
                 </div>
               )}
             </div>
-
-            <div className="product-info">
-              <Link to={`/products/${p.id}`} className="product-name-link">
-                <h3 className="product-name">{p.name}</h3>
-              </Link>
-              <p className="product-price">₹{p.price.toLocaleString()}</p>
-            </div>
-
-            {userRole !== "ADMIN" && (
-              <button
-                className={`add-btn ${animating === p.id ? "added" : ""} ${p.stock === 0 ? "out-of-stock" : ""}`}
-                onClick={() => addToCart(String(p.id))}
-                disabled={animating === p.id || p.stock === 0}
-              >
-                {p.stock === 0
-                  ? "Out of Stock"
-                  : animating === p.id
-                    ? "✔ In Cart"
-                    : "Add to Cart"}
-              </button>
-            )}
-
-            {userRole === "ADMIN" && (
-              <div className="admin-actions">
-                <Link to={`/admin/edit/${p.id}`} className="edit-btn">
-                  Edit
-                </Link>
-                <button
-                  className="delete-btn"
-                  onClick={async () => {
-                    const result = await Swal.fire({
-                      title: "Delete Product?",
-                      text: "Are you sure you want to delete this product? This cannot be undone.",
-                      icon: "warning",
-                      showCancelButton: true,
-                      confirmButtonColor: "#ef4444",
-                      cancelButtonColor: "#3b82f6",
-                      confirmButtonText: "Yes, delete it",
-                      customClass: {
-                        popup: 'swal-premium'
-                      }
-                    });
-
-                    if (result.isConfirmed) {
-                      try {
-                        await api.delete(`/products/${p.id}`);
-                        toast.success("Product deleted");
-                        setProducts(products.filter(item => item.id !== p.id));
-                      } catch (err) {
-                        toast.error("Failed to delete product");
-                      }
-                    }
-                  }}
-                >
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
-        ))}
+          ))}
       </div>
+
+      {products.length > itemsPerPage && (
+        <div className="pagination-controls" style={{ marginTop: '40px' }}>
+          <button
+            onClick={() => {
+              setCurrentPage(prev => Math.max(prev - 1, 1));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            disabled={currentPage === 1}
+            className="pagination-btn"
+          >
+            Previous
+          </button>
+          <span className="pagination-info">
+            Page {currentPage} of {Math.ceil(products.length / itemsPerPage)}
+          </span>
+          <button
+            onClick={() => {
+              setCurrentPage(prev => Math.min(prev + 1, Math.ceil(products.length / itemsPerPage)));
+              window.scrollTo({ top: 0, behavior: 'smooth' });
+            }}
+            disabled={currentPage >= Math.ceil(products.length / itemsPerPage)}
+            className="pagination-btn"
+          >
+            Next
+          </button>
+        </div>
+      )}
     </div>
   );
 }
