@@ -1,0 +1,32 @@
+# Docker/Database Local Data Volumes
+mongo-data/
+inventory-mongo-data/
+auth-data/
+order-data/
+payment-data/
+redis-data/
+
+# Node modules
+node_modules/
+**/node_modules/
+npm-debug.log
+yarn-error.log
+
+# Java/Maven Build outputs
+target/
+*.class
+
+# React/Vite Build outputs
+frontend/dist/
+frontend/build/
+
+# IDE & OS
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Environment variables
+.env
+.env.local
+.env.*.local
