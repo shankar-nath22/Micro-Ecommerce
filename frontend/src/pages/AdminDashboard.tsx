@@ -70,22 +70,20 @@ export default function AdminDashboard() {
             const productsRes = await api.get<Product[]>("/products");
             const fetchedProducts = productsRes.data;
 
-            // Fetch inventory stock for all products simultaneously
-            const productsWithStock = await Promise.all(
-                fetchedProducts.map(async (p) => {
-                    let inventoryStock = p.stock || 0;
-                    try {
-                        const stockRes = await api.get(`/inventory/stock/${p.id}`);
-                        inventoryStock = stockRes.data.quantity;
-                    } catch (err: any) {
-                        // Ignore 404s (stock not found)
-                        if (err.response?.status !== 404) {
-                            console.error(`Failed to fetch stock for ${p.id}`, err);
-                        }
-                    }
-                    return { ...p, stock: inventoryStock };
-                })
-            );
+            // Fetch inventory stock for all products in ONE bulk request
+            const productIds = fetchedProducts.map(p => p.id);
+            const stocksRes = await api.post("/inventory/stocks", productIds);
+            const stocksMap: Record<string, number> = {};
+
+            // Map the bulk results for easy lookup
+            stocksRes.data.forEach((s: any) => {
+                stocksMap[s.productId] = s.quantity;
+            });
+
+            const productsWithStock = fetchedProducts.map(p => ({
+                ...p,
+                stock: stocksMap[p.id] ?? 0
+            }));
 
             setProducts(productsWithStock);
         } catch (err) {

@@ -6,4 +6,6 @@ import java.util.Optional;
 
 public interface StockRepository extends MongoRepository<Stock, String> {
     Optional<Stock> findByProductId(String productId);
+
+    java.util.List<Stock> findAllByProductIdIn(java.util.List<String> productIds);
 }
