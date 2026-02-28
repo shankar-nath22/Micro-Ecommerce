@@ -5,6 +5,8 @@ import com.example.auth_service.repository.UserRepository;
 import com.example.auth_service.util.JwtUtil;
 import com.example.auth_service.dto.LoginRequest;
 import com.example.auth_service.dto.SignupRequest;
+import com.example.auth_service.dto.ProfileResponse;
+import com.example.auth_service.dto.ProfileUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -42,6 +44,12 @@ public class AuthController {
         user.setPassword(passwordEncoder.encode(rawPassword));
         user.setRole(role.toUpperCase());
 
+        user.setName(req.getName());
+        user.setAge(req.getAge());
+        user.setGender(req.getGender());
+        user.setPhone(req.getPhone());
+        user.setAddress(req.getAddress());
+
         repo.save(user);
 
         return ResponseEntity.ok(Map.of("message", "Signup successful"));
@@ -69,6 +77,7 @@ public class AuthController {
                 "token", accessToken,
                 "refreshToken", refreshToken,
                 "email", user.getEmail(),
+                "name", user.getName() != null ? user.getName() : "",
                 "role", user.getRole(),
                 "userId", user.getId()));
     }
@@ -91,5 +100,64 @@ public class AuthController {
         String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
 
         return ResponseEntity.ok(Map.of("token", newAccessToken));
+    }
+
+    @GetMapping("/profile")
+    public ResponseEntity<?> getProfile(@RequestHeader("Authorization") String authHeader) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
+        }
+
+        String email = jwtUtil.extractClaims(token).getSubject();
+        User user = repo.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        ProfileResponse response = new ProfileResponse(
+                user.getEmail(),
+                user.getName(),
+                user.getAge(),
+                user.getGender(),
+                user.getPhone(),
+                user.getAddress());
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<?> updateProfile(@RequestHeader("Authorization") String authHeader,
+            @RequestBody ProfileUpdateRequest req) {
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
+        }
+
+        String token = authHeader.substring(7);
+        if (!jwtUtil.validateToken(token)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid token"));
+        }
+
+        String email = jwtUtil.extractClaims(token).getSubject();
+        User user = repo.findByEmail(email).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+        }
+
+        user.setName(req.getName());
+        user.setAge(req.getAge());
+        user.setGender(req.getGender());
+        user.setPhone(req.getPhone());
+        user.setAddress(req.getAddress());
+
+        repo.save(user);
+
+        return ResponseEntity.ok(Map.of("message", "Profile updated successfully"));
     }
 }

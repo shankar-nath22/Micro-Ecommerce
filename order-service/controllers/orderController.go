@@ -41,6 +41,11 @@ func CreateOrder(c *gin.Context) {
 			continue
 		}
 
+		if qty > product.Stock {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient stock for product: " + product.Name})
+			return
+		}
+
 		item := models.OrderItem{
 			ProductID:   product.ID,
 			ProductName: product.Name,

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import api from "../api/axios";
 import { useUserStore } from "../store/userStore";
 import "./Products.css";
@@ -10,6 +10,7 @@ interface Product {
   name: string;
   description: string;
   price: number;
+  stock: number;
   imageUrl?: string;
 }
 
@@ -19,10 +20,14 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [animating, setAnimating] = useState<string | null>(null);
+  const [searchParams] = useSearchParams();
+  const searchQuery = searchParams.get("search");
 
   useEffect(() => {
+    setLoading(true);
+    const url = searchQuery ? `/products?name=${encodeURIComponent(searchQuery)}` : "/products";
     api
-      .get<Product[]>("/products")
+      .get<Product[]>(url)
       .then((res) => {
         setProducts(res.data);
         setLoading(false);
@@ -32,7 +37,7 @@ export default function Products() {
         toast.error("Failed to fetch products");
         setLoading(false);
       });
-  }, []);
+  }, [searchQuery]);
 
   async function addToCart(productId: string) {
     setAnimating(productId);
@@ -44,9 +49,13 @@ export default function Products() {
         quantity: 1,
       });
       toast.success("Added to cart!");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      toast.error("Failed to add to cart");
+      if (err.response && err.response.status === 400 && err.response.data && err.response.data.error) {
+        toast.error(err.response.data.error);
+      } else {
+        toast.error("Failed to add to cart");
+      }
       clearTimeout(timer);
       setAnimating(null);
     }
@@ -65,8 +74,17 @@ export default function Products() {
   return (
     <div className="products-page">
       <div className="title-container">
-        <h1 className="title">Discover Products</h1>
+        <h1 className="title">
+          {searchQuery ? `Search Results for "${searchQuery}"` : "Discover Products"}
+        </h1>
       </div>
+
+      {products.length === 0 && !loading && (
+        <div style={{ textAlign: "center", padding: "4rem", color: "var(--text-secondary)" }}>
+          <h2>No products found</h2>
+          <p>Try adjusting your search criteria.</p>
+        </div>
+      )}
 
       <div className="product-grid">
         {products.map((p) => (
@@ -94,11 +112,15 @@ export default function Products() {
 
             {userRole !== "ADMIN" && (
               <button
-                className={`add-btn ${animating === p.id ? "added" : ""}`}
+                className={`add-btn ${animating === p.id ? "added" : ""} ${p.stock === 0 ? "out-of-stock" : ""}`}
                 onClick={() => addToCart(String(p.id))}
-                disabled={animating === p.id}
+                disabled={animating === p.id || p.stock === 0}
               >
-                {animating === p.id ? "✔ In Cart" : "Add to Cart"}
+                {p.stock === 0
+                  ? "Out of Stock"
+                  : animating === p.id
+                    ? "✔ In Cart"
+                    : "Add to Cart"}
               </button>
             )}
 

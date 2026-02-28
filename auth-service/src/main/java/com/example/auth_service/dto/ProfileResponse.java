@@ -1,40 +1,23 @@
-package com.example.auth_service.model;
+package com.example.auth_service.dto;
 
-import jakarta.persistence.*;
-
-@Entity
-@Table(name = "users")
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(unique = true)
+public class ProfileResponse {
     private String email;
-
-    private String password;
-
-    private String role; // USER or ADMIN
-
-    private String refreshToken;
-
     private String name;
     private Integer age;
     private String gender;
     private String phone;
     private String address;
 
-    public User() {
+    public ProfileResponse() {
     }
 
-    // Getters and setters
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
+    public ProfileResponse(String email, String name, Integer age, String gender, String phone, String address) {
+        this.email = email;
+        this.name = name;
+        this.age = age;
+        this.gender = gender;
+        this.phone = phone;
+        this.address = address;
     }
 
     public String getEmail() {
@@ -43,30 +26,6 @@ public class User {
 
     public void setEmail(String email) {
         this.email = email;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public String getRole() {
-        return role;
-    }
-
-    public void setRole(String role) {
-        this.role = role;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
     }
 
     public String getName() {

@@ -6,4 +6,6 @@ import java.util.List;
 
 public interface ProductRepository extends MongoRepository<Product, String> {
     List<Product> findByIsActiveTrue();
+
+    List<Product> findByNameContainingIgnoreCaseAndIsActiveTrue(String name);
 }

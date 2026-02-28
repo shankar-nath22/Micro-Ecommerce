@@ -29,9 +29,12 @@ public class ProductController {
         return ResponseEntity.ok(repo.save(product));
     }
 
-    // READ — Get all
+    // READ — Get all or search by name
     @GetMapping
-    public ResponseEntity<List<Product>> getAll() {
+    public ResponseEntity<List<Product>> getAll(@RequestParam(required = false) String name) {
+        if (name != null && !name.trim().isEmpty()) {
+            return ResponseEntity.ok(repo.findByNameContainingIgnoreCaseAndIsActiveTrue(name.trim()));
+        }
         return ResponseEntity.ok(repo.findByIsActiveTrue());
     }
 

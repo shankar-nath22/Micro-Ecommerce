@@ -139,8 +139,19 @@
   font-size: 1rem;
 }
 
-.add-btn:hover {
+.add-btn:hover:not(:disabled) {
   background: #1e293b;
+}
+
+.add-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-btn.out-of-stock {
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error, #ef4444);
+  border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .admin-actions {

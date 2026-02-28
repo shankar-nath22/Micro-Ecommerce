@@ -9,6 +9,7 @@ import "./Auth.css";
 interface LoginResponse {
   token: string;
   email: string;
+  name: string;
   role: string;
 }
 
@@ -42,7 +43,7 @@ export default function Login() {
       localStorage.setItem("userId", decoded.userId);
 
       // 🔥 Store user info in Zustand (also sets token in localStorage)
-      setUser(token, res.data.role, res.data.email);
+      setUser(token, res.data.role, res.data.email, res.data.name);
 
       toast.success("Welcome back!");
       navigate("/products");

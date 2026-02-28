@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
 import "./Navbar.css";
@@ -6,7 +7,18 @@ export default function Navbar() {
   const navigate = useNavigate();
   const token = useUserStore((state) => state.token);
   const userRole = useUserStore((state) => state.role);
+  const userName = useUserStore((state) => state.name);
   const logout = useUserStore((state) => state.logout);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
+    } else {
+      navigate(`/products`);
+    }
+  };
 
   return (
     <nav className="navbar glass-morphism">
@@ -25,7 +37,21 @@ export default function Navbar() {
 
           {token && (
             <>
+              <form className="search-form" onSubmit={handleSearch}>
+                <input
+                  type="text"
+                  placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="search-input"
+                />
+                <button type="submit" className="search-btn">🔍</button>
+              </form>
+
               <Link to="/products" className="nav-link">Products</Link>
+              <Link to="/profile" className="nav-link profile-link">
+                {userName ? `Hi, ${userName.split(' ')[0]}` : "Profile"}
+              </Link>
 
               {userRole === "USER" && (
                 <>

@@ -15,6 +15,11 @@ async function addToCart(req, res) {
   const product = await getProduct(productId);
   if (!product) return res.status(404).json({ error: "Product not found" });
 
+  const currentCartQty = Number(await redis.hget(cartKey(userId), productId)) || 0;
+  if (currentCartQty + quantity > product.stock) {
+    return res.status(400).json({ error: `Not enough stock. Only ${product.stock} available.` });
+  }
+
   const newQty = await redis.hincrby(cartKey(userId), productId, quantity);
 
   if (newQty <= 0) await redis.hdel(cartKey(userId), productId);
@@ -80,6 +85,13 @@ async function updateQuantity(req, res) {
   if (quantity <= 0) {
     await redis.hdel(cartKey(userId), productId);
     return res.json({ message: "Item removed" });
+  }
+
+  const product = await getProduct(productId);
+  if (!product) return res.status(404).json({ error: "Product not found" });
+
+  if (quantity > product.stock) {
+    return res.status(400).json({ error: `Not enough stock. Only ${product.stock} available.` });
   }
 
   await redis.hset(cartKey(userId), productId, quantity);
