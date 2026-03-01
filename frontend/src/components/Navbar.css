@@ -126,53 +126,213 @@
     transform: translateY(-1px);
 }
 
+.search-container {
+    position: relative;
+    z-index: 1001;
+}
+
 .search-form {
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
-    padding: 4px 12px;
-    margin-right: 16px;
-    transition: all 0.3s ease;
+    border-radius: 14px;
+    padding: 2px 4px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    width: 400px;
 }
 
+.search-form.active,
 .search-form:focus-within {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.1);
     border-color: var(--primary-color);
-    box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 20px var(--primary-glow);
+    transform: translateY(-1px);
+}
+
+.search-input-wrapper {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 6px 12px;
+    gap: 10px;
+}
+
+.search-icon {
+    font-size: 1.1rem;
+    opacity: 0.6;
 }
 
 .search-input {
     background: transparent;
     border: none;
     color: var(--text-primary);
-    font-size: 0.9rem;
-    padding: 4px 8px;
+    font-size: 0.95rem;
     outline: none;
-    width: 400px;
-    transition: width 0.3s ease;
+    width: 100%;
+    font-family: inherit;
 }
 
 .search-input::placeholder {
     color: var(--text-secondary);
+    opacity: 0.7;
 }
 
-.search-btn {
-    background: transparent;
+.clear-btn {
+    background: var(--surface-accent);
     border: none;
-    cursor: pointer;
-    font-size: 1rem;
-    opacity: 0.7;
-    transition: opacity 0.2s ease;
-    padding: 0;
+    color: var(--text-secondary);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.search-btn:hover {
+.clear-btn:hover {
+    background: var(--error);
+    color: white;
+}
+
+/* Dropdown Styles */
+.search-dropdown {
+    position: absolute;
+    top: calc(100% + 12px);
+    left: 0;
+    right: 0;
+    border-radius: 16px;
+    border: 1px solid var(--glass-border);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+    animation: slideDown 0.3s ease-out;
+    padding: 8px 0;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.section-header {
+    padding: 8px 16px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.suggestion-item.selected::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 70%;
+    background: var(--primary-color);
+    border-radius: 0 4px 4px 0;
+}
+
+.history-icon {
+    font-size: 1rem;
+    opacity: 0.5;
+}
+
+.suggestion-text {
+    flex: 1;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.remove-history {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    padding: 4px;
+    cursor: pointer;
+}
+
+.suggestion-item:hover .remove-history {
     opacity: 1;
+}
+
+.suggestion-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--surface-accent);
+}
+
+.suggestion-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-placeholder-mini {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-color);
+    color: white;
+    font-weight: 700;
+}
+
+.suggestion-info {
+    flex: 1;
+}
+
+.suggestion-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+
+.suggestion-price {
+    font-size: 0.8rem;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.no-suggestions {
+    padding: 24px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
 }
 
 @media (max-width: 768px) {

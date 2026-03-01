@@ -113,9 +113,19 @@ export default function Products() {
       </div>
 
       {products.length === 0 && !loading && (
-        <div style={{ textAlign: "center", padding: "4rem", color: "var(--text-secondary)" }}>
-          <h2>No products found</h2>
-          <p>Try adjusting your search criteria.</p>
+        <div className="no-results-container">
+          <div className="no-results-icon">🔍</div>
+          <h2>No results found for "{searchQuery}"</h2>
+          <p>We couldn't find what you're looking for. Try checking your spelling or using more general terms.</p>
+          <button
+            className="clear-search-btn"
+            onClick={() => {
+              setSearchParams({});
+              navigate("/products");
+            }}
+          >
+            Back to All Products
+          </button>
         </div>
       )}
 
