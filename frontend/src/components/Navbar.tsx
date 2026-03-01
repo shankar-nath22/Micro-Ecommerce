@@ -4,6 +4,7 @@ import { useUserStore } from "../store/userStore";
 import { useThemeStore } from "../store/themeStore";
 import api from "../api/axios";
 import Swal from "sweetalert2";
+import { useNotificationStore } from "../store/notificationStore";
 import "./Navbar.css";
 
 interface LowStockItem {
@@ -26,10 +27,13 @@ export default function Navbar() {
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
-  const [lowStockItems, setLowStockItems] = useState<LowStockItem[]>([]);
+  const { lowStockItems, fetchLowStock, clearNotifications } = useNotificationStore();
   const [showNotifications, setShowNotifications] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const saved = localStorage.getItem("recentSearches");
@@ -41,8 +45,13 @@ export default function Navbar() {
   useEffect(() => {
     if (userRole === "ADMIN") {
       fetchLowStock();
+
+      // Set up periodic refresh every 60 seconds
+      const interval = setInterval(fetchLowStock, 60000);
+      return () => clearInterval(interval);
     }
-  }, [userRole, location.pathname]); // Refresh on navigation
+    setIsMenuOpen(false); // Close menu on navigation
+  }, [userRole, location.pathname, fetchLowStock]); // Refresh on navigation or mount
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -51,6 +60,13 @@ export default function Navbar() {
       }
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
+      }
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        // Only close if it's not the hamburger button itself (handled by onClick)
+        const target = event.target as HTMLElement;
+        if (!target.closest('.hamburger-btn')) {
+          setIsMenuOpen(false);
+        }
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -125,28 +141,6 @@ export default function Navbar() {
     }
   };
 
-  const fetchLowStock = async () => {
-    try {
-      const res = await api.get<any[]>("/products");
-
-      // Fetch accurate inventory for each product
-      const itemsWithStock = await Promise.all(
-        res.data.map(async (p) => {
-          let stock = p.stock || 0;
-          try {
-            const stockRes = await api.get(`/inventory/stock/${p.id}`);
-            stock = stockRes.data.quantity;
-          } catch (e) { }
-          return { id: p.id, name: p.name, stock };
-        })
-      );
-
-      const criticallyLow = itemsWithStock.filter(item => item.stock < 5);
-      setLowStockItems(criticallyLow);
-    } catch (err) {
-      console.error("Failed to fetch low stock alerts", err);
-    }
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,180 +163,211 @@ export default function Navbar() {
           </button>
         </div>
 
-        <div className="nav-links">
-          {!token && (
-            <>
-              <Link to="/" className="nav-link">Login</Link>
-              <Link to="/signup" className="nav-link signup-btn">Get Started</Link>
-            </>
-          )}
-
+        <div className="nav-right">
           {token && (
-            <>
-              <div className="search-container" ref={searchRef}>
-                <form
-                  className={`search-form ${showDropdown ? "active" : ""}`}
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSearchSubmit(searchQuery);
-                  }}
-                >
-                  <div className="search-input-wrapper">
-                    <span className="search-icon">🔍</span>
-                    <input
-                      type="text"
-                      placeholder="Search products..."
-                      value={searchQuery}
-                      onChange={(e) => {
-                        setSearchQuery(e.target.value);
-                        setShowDropdown(true);
-                        setSelectedIndex(-1);
-                      }}
-                      onFocus={() => setShowDropdown(true)}
-                      onKeyDown={handleKeyDown}
-                      className="search-input"
-                    />
-                    {searchQuery && (
-                      <button
-                        type="button"
-                        className="clear-btn"
-                        onClick={() => {
-                          setSearchQuery("");
-                          setSuggestions([]);
-                        }}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                </form>
-
-                {showDropdown && (searchQuery.trim() === "" ? recentSearches.length > 0 : (suggestions.length > 0 || searchQuery.trim().length > 1)) && (
-                  <div className="search-dropdown glass-morphism">
-                    {searchQuery.trim() === "" ? (
-                      <div className="dropdown-section">
-                        <div className="section-header">Recent Searches</div>
-                        {recentSearches.map((query, index) => (
-                          <div
-                            key={query}
-                            className={`suggestion-item ${selectedIndex === index ? "selected" : ""}`}
-                            onClick={() => handleSearchSubmit(query)}
-                          >
-                            <span className="history-icon">🕒</span>
-                            <span className="suggestion-text">{query}</span>
-                            <button
-                              className="remove-history"
-                              onClick={(e) => removeRecentSearch(e, query)}
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="dropdown-section">
-                        {suggestions.length > 0 ? (
-                          suggestions.map((p, index) => (
-                            <div
-                              key={p.id}
-                              className={`suggestion-item ${selectedIndex === index ? "selected" : ""}`}
-                              onClick={() => handleSearchSubmit(p.name)}
-                            >
-                              <div className="suggestion-image">
-                                {p.imageUrl ? (
-                                  <img src={p.imageUrl} alt="" />
-                                ) : (
-                                  <div className="image-placeholder-mini">{p.name[0]}</div>
-                                )}
-                              </div>
-                              <div className="suggestion-info">
-                                <div className="suggestion-name">{p.name}</div>
-                                <div className="suggestion-price">₹{p.price}</div>
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="no-suggestions">No products matching "{searchQuery}"</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              {userRole === "USER" && (
-                <>
-                  <Link to="/orders" className="nav-link">Orders</Link>
-                  <Link to="/cart" className="nav-link cart-link">Cart</Link>
-                </>
-              )}
-
-              {userRole === "ADMIN" && (
-                <>
-                  <Link to="/admin" className="nav-link admin-link">Manage Inventory</Link>
-                  <div className="notification-container" ref={notifRef}>
-                    <button
-                      className="notification-bell"
-                      onClick={() => setShowNotifications(!showNotifications)}
-                      aria-label="Notifications"
-                    >
-                      🔔
-                      {lowStockItems.length > 0 && (
-                        <span className="notification-badge">{lowStockItems.length}</span>
-                      )}
-                    </button>
-
-                    {showNotifications && (
-                      <div className="notification-dropdown glass-morphism">
-                        <h4 className="dropdown-header">Low Stock Alerts</h4>
-                        {lowStockItems.length === 0 ? (
-                          <div className="dropdown-empty">All stock levels are healthy.</div>
-                        ) : (
-                          <div className="dropdown-list">
-                            {lowStockItems.map(item => (
-                              <div key={item.id} className="dropdown-item">
-                                <span className="item-name">{item.name}</span>
-                                <span className="item-stock">{item.stock} left</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                        <Link to="/admin" className="dropdown-footer" onClick={() => setShowNotifications(false)}>
-                          Review Inventory
-                        </Link>
-                      </div>
-                    )}
-                  </div>
-                </>
-              )}
-
-              <Link to="/profile" className="nav-link profile-link">
-                {userName ? `Hi, ${userName.split(' ')[0]}` : "Profile"}
-              </Link>
-              <button
-                onClick={async () => {
-                  const result = await Swal.fire({
-                    title: "Ready to leave?",
-                    text: "You will need to manually sign back in next time.",
-                    icon: "question",
-                    showCancelButton: true,
-                    confirmButtonColor: "#ef4444",
-                    cancelButtonColor: "#3b82f6",
-                    confirmButtonText: "Yes, logout",
-                    customClass: {
-                      popup: 'swal-premium'
-                    }
-                  });
-                  if (result.isConfirmed) {
-                    logout();
-                    navigate("/");
+            <div className="search-container" ref={searchRef}>
+              <form
+                className={`search-form ${showDropdown ? "active" : ""}`}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSearchSubmit(searchQuery);
+                }}
+                onClick={() => {
+                  // Focus input on mobile when the collapsed icon-button is clicked
+                  if (window.innerWidth <= 500) {
+                    searchInputRef.current?.focus();
                   }
                 }}
-                className="logout-btn"
               >
-                Logout
+                <div className="search-input-wrapper">
+                  <button
+                    type="button"
+                    className="search-back-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      searchInputRef.current?.blur();
+                      setShowDropdown(false);
+                    }}
+                  >
+                    ←
+                  </button>
+                  <span className="search-icon">🔍</span>
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search..."
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowDropdown(true);
+                      setSelectedIndex(-1);
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                    onKeyDown={handleKeyDown}
+                    className="search-input"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      className="clear-btn"
+                      onClick={() => {
+                        setSearchQuery("");
+                        setSuggestions([]);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </form>
+
+              {showDropdown && (searchQuery.trim() === "" ? recentSearches.length > 0 : (suggestions.length > 0 || searchQuery.trim().length > 1)) && (
+                <div className="search-dropdown glass-morphism">
+                  {searchQuery.trim() === "" ? (
+                    <div className="dropdown-section">
+                      <div className="section-header">Recent</div>
+                      {recentSearches.map((query, index) => (
+                        <div
+                          key={query}
+                          className={`suggestion-item ${selectedIndex === index ? "selected" : ""}`}
+                          onClick={() => handleSearchSubmit(query)}
+                        >
+                          <span className="history-icon">🕒</span>
+                          <span className="suggestion-text">{query}</span>
+                          <button
+                            className="remove-history"
+                            onClick={(e) => removeRecentSearch(e, query)}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="dropdown-section">
+                      {suggestions.length > 0 ? (
+                        suggestions.map((p, index) => (
+                          <div
+                            key={p.id}
+                            className={`suggestion-item ${selectedIndex === index ? "selected" : ""}`}
+                            onClick={() => handleSearchSubmit(p.name)}
+                          >
+                            <div className="suggestion-image">
+                              {p.imageUrl ? (
+                                <img src={p.imageUrl} alt="" />
+                              ) : (
+                                <div className="image-placeholder-mini">{p.name[0]}</div>
+                              )}
+                            </div>
+                            <div className="suggestion-info">
+                              <div className="suggestion-name">{p.name}</div>
+                              <div className="suggestion-price">₹{p.price}</div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-suggestions">No results for "{searchQuery}"</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {token && userRole === "ADMIN" && (
+            <div className="notification-container sidebar-alert" ref={notifRef}>
+              <button
+                className="notification-bell"
+                onClick={() => setShowNotifications(!showNotifications)}
+                aria-label="Notifications"
+              >
+                🔔
+                {lowStockItems.length > 0 && (
+                  <span className="notification-badge">{lowStockItems.length}</span>
+                )}
               </button>
-            </>
+
+              {showNotifications && (
+                <div className="notification-dropdown glass-morphism">
+                  <h4 className="dropdown-header">Low Stock</h4>
+                  {lowStockItems.length === 0 ? (
+                    <div className="dropdown-empty">All levels healthy</div>
+                  ) : (
+                    <div className="dropdown-list">
+                      {lowStockItems.map(item => (
+                        <div key={item.id} className="dropdown-item">
+                          <span className="item-name">{item.name}</span>
+                          <span className="item-stock">{item.stock} left</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <Link to="/admin" className="dropdown-footer" onClick={() => setShowNotifications(false)}>
+                    Review Settings
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className={`nav-links-container ${isMenuOpen ? 'open' : ''}`} ref={menuRef}>
+            {!token ? (
+              <div className="nav-links">
+                <Link to="/" className="nav-link">Login</Link>
+                <Link to="/signup" className="nav-link signup-btn">Get Started</Link>
+              </div>
+            ) : (
+              <div className="nav-links">
+                {userRole === "USER" && (
+                  <>
+                    <Link to="/orders" className="nav-link">Orders</Link>
+                    <Link to="/cart" className="nav-link cart-link">Cart</Link>
+                  </>
+                )}
+
+                {userRole === "ADMIN" && (
+                  <Link to="/admin" className="nav-link admin-link">Inventory</Link>
+                )}
+
+                <Link to="/profile" className="nav-link profile-link">
+                  {userName ? `Hi, ${userName.split(' ')[0]}` : "Profile"}
+                </Link>
+                <button
+                  onClick={async () => {
+                    const result = await Swal.fire({
+                      title: "Logout?",
+                      text: "Sign back in later.",
+                      icon: "question",
+                      showCancelButton: true,
+                      confirmButtonColor: "#ef4444",
+                      confirmButtonText: "Logout",
+                    });
+                    if (result.isConfirmed) {
+                      clearNotifications(); // Clear notifications on logout
+                      logout();
+                      navigate("/");
+                      setIsMenuOpen(false);
+                    }
+                  }}
+                  className="logout-btn"
+                >
+                  Logout
+                </button>
+              </div>
+            )}
+          </div>
+
+          {token && (
+            <button
+              className={`hamburger-btn ${isMenuOpen ? 'active' : ''}`}
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              aria-label="Toggle menu"
+            >
+              <span></span>
+              <span></span>
+              <span></span>
+            </button>
           )}
         </div>
       </div>

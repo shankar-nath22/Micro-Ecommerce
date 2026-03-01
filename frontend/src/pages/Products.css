@@ -64,7 +64,7 @@
   overflow: hidden;
 }
 
-.product-image {
+.products-page .product-image {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -107,7 +107,7 @@
   color: var(--primary-color);
 }
 
-.product-name {
+.products-page .product-name {
   text-align: center;
   font-size: 1.1rem;
   font-weight: 600;
@@ -130,7 +130,7 @@
   overflow: hidden;
 }
 
-.product-price {
+.products-page .product-price {
   text-align: center;
   font-size: 1.25rem;
   font-weight: 800;
@@ -379,4 +379,120 @@
 .pagination-input[type=number] {
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+@media (max-width: 600px) {
+  .products-page {
+    padding: 0 8px 40px;
+  }
+
+  .title-container {
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .product-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .product-card {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .products-page .product-name {
+    font-size: 0.7rem;
+  }
+
+  .products-page .product-card .product-price {
+    font-size: 0.75rem;
+    font-weight: 800;
+  }
+
+  .products-page .product-image {
+    padding: 2px;
+  }
+
+  .add-btn,
+  .edit-btn,
+  .delete-btn {
+    padding: 6px 4px;
+    font-size: 0.7rem;
+    border-radius: 6px;
+  }
+
+  .admin-actions {
+    gap: 4px;
+  }
+
+  .pagination-controls {
+    padding: 16px;
+    background: var(--surface-accent);
+    border-radius: 24px;
+    margin: 20px 8px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border);
+  }
+
+  .pagination-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    padding: 0;
+    font-size: 0;
+    /* Hide text, use icons or just arrows */
+    position: relative;
+    background: var(--surface-color);
+  }
+
+  .pagination-btn::before {
+    content: '';
+    font-size: 1.2rem;
+    display: block;
+  }
+
+  .pagination-btn:first-of-type::before {
+    content: '←';
+    font-size: 1.1rem;
+  }
+
+  .pagination-btn:last-of-type::before {
+    content: '→';
+    font-size: 1.1rem;
+  }
+
+  .pagination-jump {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    padding: 0;
+  }
+
+  .pagination-input {
+    width: 50px;
+    height: 40px;
+    background: var(--surface-color);
+    border: 1px solid var(--glass-border);
+    border-radius: 10px;
+    text-align: center;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .pagination-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 15px var(--primary-glow);
+    background: var(--surface-accent);
+  }
 }

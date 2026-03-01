@@ -1,5 +1,13 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
+html,
+body,
+#root {
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
+}
+
 :root {
   --bg-color: #05070a;
   --surface-color: #0f172a;
@@ -50,6 +58,7 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
   background: radial-gradient(circle at top right, #1e1b4b 0%, #05070a 50%),
     radial-gradient(circle at bottom left, #2e1065 0%, #05070a 50%);
   background-attachment: fixed;
