@@ -1,0 +1,124 @@
+.cart-sticker-root {
+    position: fixed;
+    bottom: 0px;
+    left: 0;
+    right: 0;
+    z-index: 999;
+    padding: 16px 20px 30px;
+    pointer-events: none;
+    animation: slideUpSticker 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.cart-sticker-content {
+    max-width: 600px;
+    margin: 0 auto;
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-radius: 20px;
+    background: var(--sticker-bg) !important;
+    color: var(--sticker-text) !important;
+    text-decoration: none;
+    box-shadow: 0 12px 40px var(--sticker-shadow);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.cart-sticker-content:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 20px 45px var(--sticker-shadow);
+    filter: brightness(1.1);
+}
+
+.cart-sticker-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.cart-sticker-badge {
+    position: relative;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.count-pill {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    background: white;
+    color: var(--primary-color);
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+}
+
+.cart-sticker-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.info-label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.info-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.cart-sticker-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+@keyframes slideUpSticker {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .cart-sticker-root {
+        padding: 16px 12px 24px;
+    }
+
+    .cart-sticker-content {
+        border-radius: 12px;
+    }
+
+    .view-cart-text {
+        display: none;
+    }
+}

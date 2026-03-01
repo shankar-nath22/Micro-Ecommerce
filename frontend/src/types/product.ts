@@ -3,7 +3,9 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  stock?: number;
+  stock: number;
+  imageUrl?: string;
+  imageUrls?: string[];
   isActive?: boolean;
 }
 

@@ -10,7 +10,7 @@
 .details-container {
     max-width: 1200px;
     margin: 0 auto;
-    padding: 32px 24px;
+    padding: 32px 24px var(--sticker-safe-area);
 }
 
 /* Inactive Banner */

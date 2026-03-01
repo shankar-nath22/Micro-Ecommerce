@@ -1,7 +1,7 @@
 .products-page {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 24px 60px;
+  padding: 0 24px var(--sticker-safe-area);
 }
 
 .title-container {
@@ -383,7 +383,7 @@
 
 @media (max-width: 600px) {
   .products-page {
-    padding: 0 8px 40px;
+    padding: 0 8px var(--sticker-safe-area);
   }
 
   .title-container {

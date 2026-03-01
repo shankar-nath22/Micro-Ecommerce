@@ -80,7 +80,7 @@ export default function Orders() {
                                     </div>
                                     <div className="order-total">
                                         <span className="total-label">Total Amount</span>
-                                        <span className="total-value">${order.total.toFixed(2)}</span>
+                                        <span className="total-value">₹{order.total.toLocaleString()}</span>
                                     </div>
                                 </div>
 
@@ -93,7 +93,7 @@ export default function Orders() {
                                                 </Link>
                                                 <span className="item-qty">Qty: {item.quantity}</span>
                                             </div>
-                                            <span className="item-price">${(item.price * item.quantity).toFixed(2)}</span>
+                                            <span className="item-price">₹{(item.price * item.quantity).toLocaleString()}</span>
                                         </div>
                                     ))}
                                 </div>

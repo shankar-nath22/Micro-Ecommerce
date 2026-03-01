@@ -9,20 +9,32 @@ import ProductDetails from "./pages/ProductDetails";
 import AdminDashboard from "./pages/AdminDashboard";
 import Profile from "./pages/Profile";
 import Navbar from "./components/Navbar";
+import CartSticker from "./components/CartSticker";
 import { Toaster } from "react-hot-toast";
 import { useThemeStore } from "./store/themeStore";
+import { useCartStore } from "./store/cartStore";
+import { useUserStore } from "./store/userStore";
 import { useEffect } from "react";
 
 export default function App() {
   const theme = useThemeStore((state) => state.theme);
+  const fetchCart = useCartStore((state) => state.fetchCart);
+  const token = useUserStore((state) => state.token);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    if (token) {
+      fetchCart();
+    }
+  }, [token, fetchCart]);
+
   return (
     <BrowserRouter>
       <Navbar />
+      <CartSticker />
       <Toaster position="top-right" />
       <Routes>
         {/* Public Routes */}

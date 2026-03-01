@@ -1,20 +1,13 @@
 import { useEffect, useState } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import api from "../api/axios";
+import { Product } from "../types/product";
 import { useUserStore } from "../store/userStore";
+import { useCartStore } from "../store/cartStore";
 import "./Products.css";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import EditProductModal from "../components/EditProductModal";
-
-interface Product {
-  id: string; // Changed from number to string to match backend ID
-  name: string;
-  description: string;
-  price: number;
-  stock: number;
-  imageUrl?: string;
-}
 
 export default function Products() {
   const navigate = useNavigate();
@@ -81,6 +74,7 @@ export default function Products() {
         productId,
         quantity: 1,
       });
+      useCartStore.getState().fetchCart();
       toast.success("Added to cart!");
     } catch (err: any) {
       console.error(err);

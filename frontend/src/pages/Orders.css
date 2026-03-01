@@ -1,6 +1,6 @@
 .orders-page {
     min-height: calc(100vh - 80px);
-    padding: 40px 24px;
+    padding: 40px 24px var(--sticker-safe-area);
 }
 
 .orders-container {

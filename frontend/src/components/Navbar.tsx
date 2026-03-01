@@ -5,6 +5,7 @@ import { useThemeStore } from "../store/themeStore";
 import api from "../api/axios";
 import Swal from "sweetalert2";
 import { useNotificationStore } from "../store/notificationStore";
+import { useCartStore } from "../store/cartStore";
 import "./Navbar.css";
 
 interface LowStockItem {
@@ -30,6 +31,7 @@ export default function Navbar() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   const { lowStockItems, fetchLowStock, clearNotifications } = useNotificationStore();
+  const { setCart: setStoreCart } = useCartStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -51,7 +53,7 @@ export default function Navbar() {
       return () => clearInterval(interval);
     }
     setIsMenuOpen(false); // Close menu on navigation
-  }, [userRole, location.pathname, fetchLowStock]); // Refresh on navigation or mount
+  }, [userRole, location.pathname, fetchLowStock]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -62,7 +64,6 @@ export default function Navbar() {
         setShowDropdown(false);
       }
       if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        // Only close if it's not the hamburger button itself (handled by onClick)
         const target = event.target as HTMLElement;
         if (!target.closest('.hamburger-btn')) {
           setIsMenuOpen(false);
@@ -73,7 +74,6 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Live Suggestions Debounce
   useEffect(() => {
     const timer = setTimeout(() => {
       if (searchQuery.trim().length > 1) {
@@ -89,7 +89,7 @@ export default function Navbar() {
   const fetchSuggestions = async () => {
     try {
       const res = await api.get(`/products?name=${encodeURIComponent(searchQuery.trim())}`);
-      setSuggestions(res.data.slice(0, 8)); // Limit to 8 suggestions
+      setSuggestions(res.data.slice(0, 8));
     } catch (err) {
       console.error("Failed to fetch suggestions", err);
     }
@@ -141,16 +141,6 @@ export default function Navbar() {
     }
   };
 
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      navigate(`/products?search=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-      navigate(`/products`);
-    }
-  };
-
   return (
     <nav className="navbar glass-morphism">
       <div className="nav-container">
@@ -173,7 +163,6 @@ export default function Navbar() {
                   handleSearchSubmit(searchQuery);
                 }}
                 onClick={() => {
-                  // Focus input on mobile when the collapsed icon-button is clicked
                   if (window.innerWidth <= 500) {
                     searchInputRef.current?.focus();
                   }
@@ -337,14 +326,24 @@ export default function Navbar() {
                   onClick={async () => {
                     const result = await Swal.fire({
                       title: "Logout?",
-                      text: "Sign back in later.",
-                      icon: "question",
+                      text: "Are you sure you want to sign out?",
+                      icon: "warning",
                       showCancelButton: true,
-                      confirmButtonColor: "#ef4444",
                       confirmButtonText: "Logout",
+                      cancelButtonText: "Stay",
+                      customClass: {
+                        popup: 'swal-premium',
+                        title: 'swal-title',
+                        htmlContainer: 'swal-text',
+                        confirmButton: 'swal-confirm-btn',
+                        cancelButton: 'swal-cancel-btn',
+                        icon: 'swal-icon-warning'
+                      },
+                      buttonsStyling: false
                     });
                     if (result.isConfirmed) {
-                      clearNotifications(); // Clear notifications on logout
+                      setStoreCart({}); // Clear cart store on logout
+                      clearNotifications();
                       logout();
                       navigate("/");
                       setIsMenuOpen(false);

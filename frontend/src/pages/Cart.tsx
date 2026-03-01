@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import api from "../api/axios";
 import "./Cart.css";
-import { Link } from "react-router-dom";
 import { Product } from "../types/product";
 import toast from "react-hot-toast";
-
-type CartMap = Record<string, number>;
+import Swal from "sweetalert2";
+import { useCartStore } from "../store/cartStore";
 
 export default function Cart() {
-  const [cart, setCart] = useState<CartMap>({});
+  const { cart, setCart, fetchCart } = useCartStore();
   const [products, setProducts] = useState<Record<string, Product>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [processing, setProcessing] = useState<boolean>(false);
@@ -25,7 +25,7 @@ export default function Cart() {
       prodRes.data.forEach((p) => (prodMap[String(p.id)] = p));
       setProducts(prodMap);
 
-      const cartRes = await api.get<CartMap>("/cart");
+      const cartRes = await api.get<Record<string, number>>("/cart");
       setCart(cartRes.data || {});
     } catch (err) {
       console.error(err);
@@ -36,14 +36,13 @@ export default function Cart() {
   }
 
   async function updateQty(productId: string, qty: number) {
+    if (qty < 0) return;
     try {
       await api.post("/cart/update", {
         productId,
         quantity: qty,
       });
-
-      const cartRes = await api.get<CartMap>("/cart");
-      setCart(cartRes.data || {});
+      fetchCart();
     } catch (err) {
       console.error(err);
       toast.error("Failed to update quantity");
@@ -51,13 +50,34 @@ export default function Cart() {
   }
 
   async function clearCart() {
-    try {
-      await api.delete("/cart/clear");
-      setCart({});
-      toast.success("Cart cleared");
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to clear cart");
+    const result = await Swal.fire({
+      title: "Clear Cart?",
+      text: "This will remove all items from your cart.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Clear All",
+      cancelButtonText: "Cancel",
+      customClass: {
+        popup: 'swal-premium',
+        title: 'swal-title',
+        htmlContainer: 'swal-text',
+        confirmButton: 'swal-confirm-btn',
+        cancelButton: 'swal-cancel-btn',
+        icon: 'swal-icon-warning'
+      },
+      buttonsStyling: false
+    });
+
+    if (result.isConfirmed) {
+      try {
+        await api.delete("/cart/clear");
+        setCart({});
+        fetchCart();
+        toast.success("Cart cleared");
+      } catch (err) {
+        console.error(err);
+        toast.error("Failed to clear cart");
+      }
     }
   }
 
@@ -67,6 +87,7 @@ export default function Cart() {
       await api.post("/orders");
       toast.success("Order placed successfully! 🚀");
       setCart({});
+      fetchCart();
     } catch (err) {
       console.error(err);
       toast.error("Failed to place order");
@@ -96,14 +117,21 @@ export default function Cart() {
 
   return (
     <div className="cart-root">
-      <h1 className="cart-title">Your Cart</h1>
+      <div className="cart-header">
+        <h1 className="cart-title">Your Cart</h1>
+        {items.length > 0 && (
+          <button className="clear-btn-header" onClick={clearCart}>
+            Clear All
+          </button>
+        )}
+      </div>
 
       {items.length === 0 ? (
         <div className="empty-state">
           <p>Your cart is empty.</p>
-          <a href="/products" className="checkout-btn" style={{ display: 'inline-block', textAlign: 'center' }}>
+          <Link to="/products" className="checkout-btn" style={{ display: 'inline-block', textAlign: 'center' }}>
             Start Shopping
-          </a>
+          </Link>
         </div>
       ) : (
         <div className="cart-container">
@@ -153,7 +181,6 @@ export default function Cart() {
             >
               {processing ? "Processing..." : "Place Order"}
             </button>
-            <button className="clear-btn" onClick={clearCart}>Clear All</button>
           </div>
         </div>
       )}
