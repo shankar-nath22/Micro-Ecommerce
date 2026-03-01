@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useUserStore } from "../store/userStore";
 import { useCartStore } from "../store/cartStore";
+import { useWishlistStore } from "../store/wishlistStore";
+import { Heart } from "lucide-react";
+import toast from "react-hot-toast";
 import "./ProductDetails.css";
 
 interface Product {
@@ -26,6 +29,7 @@ export default function ProductDetails() {
     const token = useUserStore((state) => state.token);
     const userRole = useUserStore((state) => state.role);
     const fetchCart = useCartStore((state) => state.fetchCart);
+    const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
 
     const [product, setProduct] = useState<Product | null>(null);
     const [stockLevel, setStockLevel] = useState<number | null>(null);
@@ -122,80 +126,124 @@ export default function ProductDetails() {
     };
 
     return (
-        <div className="product-details-container">
-            <div className="details-card premium-card glass-morphism">
-                <div className="details-grid">
-                    <div className="image-gallery">
-                        <div
-                            className="main-image-container"
-                            onMouseEnter={() => setIsZooming(true)}
-                            onMouseLeave={() => setIsZooming(false)}
-                            onMouseMove={handleMouseMove}
-                        >
-                            <img
-                                src={allImages[activeImageIndex]}
-                                alt={product.name}
-                                className={`main-image ${isZooming ? "zoomed" : ""}`}
-                                style={isZooming ? {
-                                    transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
-                                    transform: 'scale(2)'
-                                } : {}}
-                            />
+        <div className="product-details-page">
+            <div className="details-container">
+                {!product.isActive && (
+                    <div className="inactive-banner">
+                        <span className="icon">⚠️</span>
+                        This product is currently inactive and cannot be purchased.
+                    </div>
+                )}
+                <div className="details-content-card">
+                    <div className="details-layout">
+                        <div className="details-image-section">
+                            <div
+                                className="main-image-container"
+                                onMouseEnter={() => setIsZooming(true)}
+                                onMouseLeave={() => setIsZooming(false)}
+                                onMouseMove={handleMouseMove}
+                            >
+                                <img
+                                    src={allImages[activeImageIndex]}
+                                    alt={product.name}
+                                    className={`product-image ${isZooming ? "zoomed" : ""}`}
+                                    style={isZooming ? {
+                                        transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
+                                        transform: 'scale(2)'
+                                    } : {}}
+                                />
+
+                                {allImages.length > 1 && (
+                                    <>
+                                        <button className="carousel-arrow prev" onClick={(e) => { e.stopPropagation(); rotateImage('prev'); }}>
+                                            <span>‹</span>
+                                        </button>
+                                        <button className="carousel-arrow next" onClick={(e) => { e.stopPropagation(); rotateImage('next'); }}>
+                                            <span>›</span>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
 
                             {allImages.length > 1 && (
-                                <>
-                                    <button className="carousel-arrow prev" onClick={(e) => { e.stopPropagation(); rotateImage('prev'); }}>
-                                        <span>‹</span>
-                                    </button>
-                                    <button className="carousel-arrow next" onClick={(e) => { e.stopPropagation(); rotateImage('next'); }}>
-                                        <span>›</span>
-                                    </button>
-                                </>
+                                <div className="thumbnail-list">
+                                    {allImages.map((url, index) => (
+                                        <div
+                                            key={index}
+                                            className={`thumbnail ${activeImageIndex === index ? "active" : ""}`}
+                                            onClick={() => setActiveImageIndex(index)}
+                                        >
+                                            <img src={url} alt={`${product.name} ${index + 1}`} />
+                                        </div>
+                                    ))}
+                                </div>
                             )}
                         </div>
 
-                        {allImages.length > 1 && (
-                            <div className="thumbnail-list">
-                                {allImages.map((url, index) => (
-                                    <div
-                                        key={index}
-                                        className={`thumbnail ${activeImageIndex === index ? "active" : ""}`}
-                                        onClick={() => setActiveImageIndex(index)}
-                                    >
-                                        <img src={url} alt={`${product.name} ${index + 1}`} />
-                                    </div>
-                                ))}
+                        <div className="details-info-section">
+                            <div className="availability-block">
+                                {isOutOfStock ? (
+                                    <span className="status-badge out-of-stock">
+                                        Currently Unavailable
+                                    </span>
+                                ) : stockLevel && stockLevel < 5 ? (
+                                    <span className="status-badge low-stock">
+                                        Limited Stock: Only {stockLevel} left
+                                    </span>
+                                ) : (
+                                    <span className="status-badge in-stock">
+                                        Available
+                                    </span>
+                                )}
                             </div>
-                        )}
-                    </div>
 
-                    <div className="details-info">
-                        <div className="badge-row">
-                            <span className={`stock-badge ${isOutOfStock ? "out" : ""}`}>
-                                {isOutOfStock ? "Out of Stock" : `In Stock: ${stockLevel}`}
-                            </span>
-                        </div>
+                            <div className="title-row">
+                                <h1 className="product-title">{product.name}</h1>
+                                {userRole === "USER" && (
+                                    <button
+                                        className={`details-wishlist-toggle ${isInWishlist(product.id) ? 'active' : ''}`}
+                                        onClick={async () => {
+                                            try {
+                                                if (isInWishlist(product.id)) {
+                                                    await removeFromWishlist(product.id);
+                                                    toast.success("Removed from wishlist");
+                                                } else {
+                                                    await addToWishlist(product.id);
+                                                    toast.success("Added to wishlist!");
+                                                }
+                                            } catch (err) {
+                                                toast.error("Wishlist sync failed");
+                                            }
+                                        }}
+                                    >
+                                        <Heart size={24} fill={isInWishlist(product.id) ? "currentColor" : "none"} />
+                                    </button>
+                                )}
+                            </div>
 
-                        <h1 className="details-title">{product.name}</h1>
-                        <p className="details-price">₹{product.price.toLocaleString()}</p>
-                        <div className="details-divider"></div>
+                            <div className="price-container">
+                                <p className="product-price">₹{product.price.toLocaleString()}</p>
+                            </div>
 
-                        <div className="details-description">
-                            <h3>About this product</h3>
-                            <p>{product.description}</p>
-                        </div>
+                            <div className="divider"></div>
 
-                        <div className="details-actions">
-                            {userRole !== "ADMIN" && (
-                                <button
-                                    className={`details-add-btn ${isOutOfStock ? "disabled" : ""}`}
-                                    onClick={handleAddToCart}
-                                    disabled={isOutOfStock}
-                                >
-                                    {isOutOfStock ? "Out of Stock" : "Add to Cart"}
-                                </button>
-                            )}
-                            {success && <div className="success-msg animate-fade-in">{success}</div>}
+                            <div className="description-block">
+                                <h3>About this product</h3>
+                                <p className="product-desc-text">{product.description}</p>
+                            </div>
+
+                            <div className="actions-block">
+                                {userRole !== "ADMIN" && (
+                                    <button
+                                        className={`add-to-cart-btn ${isOutOfStock ? "disabled" : ""}`}
+                                        onClick={handleAddToCart}
+                                        disabled={isOutOfStock}
+                                    >
+                                        {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                                    </button>
+                                )}
+                                {success && <div className="success-toast fade-in">{success}</div>}
+                            </div>
                         </div>
                     </div>
                 </div>

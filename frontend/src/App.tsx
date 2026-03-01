@@ -4,6 +4,7 @@ import Signup from "./pages/Signup";
 import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import Orders from "./pages/Orders";
+import Wishlist from "./pages/Wishlist";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ProductDetails from "./pages/ProductDetails";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -15,8 +16,10 @@ import { useThemeStore } from "./store/themeStore";
 import { useCartStore } from "./store/cartStore";
 import { useUserStore } from "./store/userStore";
 import { useEffect } from "react";
+import { useNotifications } from "./hooks/useNotifications";
 
 export default function App() {
+  useNotifications();
   const theme = useThemeStore((state) => state.theme);
   const fetchCart = useCartStore((state) => state.fetchCart);
   const token = useUserStore((state) => state.token);
@@ -65,6 +68,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <Orders />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/wishlist"
+          element={
+            <ProtectedRoute>
+              <Wishlist />
             </ProtectedRoute>
           }
         />

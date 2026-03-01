@@ -6,6 +6,8 @@ import api from "../api/axios";
 import Swal from "sweetalert2";
 import { useNotificationStore } from "../store/notificationStore";
 import { useCartStore } from "../store/cartStore";
+import { useWishlistStore } from "../store/wishlistStore";
+import { Heart, ShoppingBag, ShoppingCart, User, LogOut, Settings, Bell, Search, X } from "lucide-react";
 import "./Navbar.css";
 
 interface LowStockItem {
@@ -32,6 +34,7 @@ export default function Navbar() {
 
   const { lowStockItems, fetchLowStock, clearNotifications } = useNotificationStore();
   const { setCart: setStoreCart } = useCartStore();
+  const { wishlist, fetchWishlist } = useWishlistStore();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -45,15 +48,13 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
-    if (userRole === "ADMIN") {
+    if (userRole === "USER") {
+      fetchWishlist();
+    } else if (userRole === "ADMIN") {
       fetchLowStock();
-
-      // Set up periodic refresh every 60 seconds
-      const interval = setInterval(fetchLowStock, 60000);
-      return () => clearInterval(interval);
     }
     setIsMenuOpen(false); // Close menu on navigation
-  }, [userRole, location.pathname, fetchLowStock]);
+  }, [userRole, location.pathname, fetchLowStock, fetchWishlist]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -287,7 +288,9 @@ export default function Navbar() {
                       {lowStockItems.map(item => (
                         <div key={item.id} className="dropdown-item">
                           <span className="item-name">{item.name}</span>
-                          <span className="item-stock">{item.stock} left</span>
+                          <span className={`item-stock ${item.stock === 0 ? 'out-of-stock' : 'low-stock'}`}>
+                            {item.stock === 0 ? 'Out of Stock' : `${item.stock} left`}
+                          </span>
                         </div>
                       ))}
                     </div>
@@ -311,6 +314,10 @@ export default function Navbar() {
                 {userRole === "USER" && (
                   <>
                     <Link to="/orders" className="nav-link">Orders</Link>
+                    <Link to="/wishlist" className="nav-link wishlist-link">
+                      <Heart size={20} className={wishlist.length > 0 ? "heart-filled" : ""} />
+                      {wishlist.length > 0 && <span className="notif-badge">{wishlist.length}</span>}
+                    </Link>
                     <Link to="/cart" className="nav-link cart-link">Cart</Link>
                   </>
                 )}

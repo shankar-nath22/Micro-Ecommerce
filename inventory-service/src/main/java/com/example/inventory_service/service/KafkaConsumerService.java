@@ -33,6 +33,7 @@ public class KafkaConsumerService {
             if (items != null && items.isArray()) {
                 for (JsonNode item : items) {
                     String productId = item.get("productId").asText();
+                    String productName = item.has("name") ? item.get("name").asText() : "Unknown Product";
                     int qty = item.get("quantity").asInt();
 
                     Stock stock = repository.findByProductId(productId).orElse(null);
@@ -44,10 +45,10 @@ public class KafkaConsumerService {
                         // Low stock check
                         if (stock.getQuantity() <= 5) {
                             String alertMessage = String.format(
-                                    "{\"type\": \"LOW_STOCK\", \"productId\": \"%s\", \"currentStock\": %d, \"message\": \"Product stock is running low!\"}",
-                                    productId, stock.getQuantity());
+                                    "{\"type\": \"LOW_STOCK\", \"productId\": \"%s\", \"productName\": \"%s\", \"currentStock\": %d, \"message\": \"Product '%s' stock is running low!\"}",
+                                    productId, productName, stock.getQuantity(), productName);
                             kafkaTemplate.send("notification_events", alertMessage);
-                            log.warn("⚠️ Low stock alert sent for product: {}", productId);
+                            log.warn("⚠️ Low stock alert sent for product: {}", productName);
                         }
 
                     } else {

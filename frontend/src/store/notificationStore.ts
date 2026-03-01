@@ -12,6 +12,7 @@ interface NotificationState {
     lastFetched: number | null;
     loading: boolean;
     fetchLowStock: () => Promise<void>;
+    addLowStockItem: (item: LowStockItem) => void;
     clearNotifications: () => void;
 }
 
@@ -46,7 +47,7 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
 
             // 3. Map stocks back to products and filter for low stock
             const lowStock = stocks
-                .filter((s) => s.quantity < 5)
+                .filter((s) => s.quantity <= 5)
                 .map((s) => {
                     const product = products.find((p) => p.id === s.productId);
                     return {
@@ -62,6 +63,20 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
             set({ loading: false });
             // Keep existing data on error to avoid flickering to 0
         }
+    },
+
+    addLowStockItem: (item: LowStockItem) => {
+        set((state) => {
+            // Check if item already exists to avoid duplicates
+            if (state.lowStockItems.some((i) => i.id === item.id)) {
+                return {
+                    lowStockItems: state.lowStockItems.map((i) =>
+                        i.id === item.id ? item : i
+                    ),
+                };
+            }
+            return { lowStockItems: [item, ...state.lowStockItems] };
+        });
     },
 
     clearNotifications: () => {

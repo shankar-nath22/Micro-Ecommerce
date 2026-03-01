@@ -241,6 +241,21 @@ services:
     networks:
       - ecom-net
 
+  wishlist-service:
+    build: ./wishlist-service
+    ports:
+      - "8088:8088"
+    restart: always
+    environment:
+      MONGODB_URI: mongodb://mongo:27017/wishlist_db
+      PORT: 8088
+      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - ecom-net
+
   api-gateway:
     build: ./api-gateway
     ports:
@@ -254,6 +269,7 @@ services:
       PAYMENT_URL: http://payment-service:8085
       INVENTORY_URL: http://inventory-service:8086
       NOTIFICATION_URL: http://notification-service:8087
+      WISHLIST_URL: http://wishlist-service:8088
       REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
@@ -271,6 +287,8 @@ services:
       inventory-service:
         condition: service_started
       notification-service:
+        condition: service_started
+      wishlist-service:
         condition: service_started
     networks:
       - ecom-net

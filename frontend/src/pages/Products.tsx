@@ -8,10 +8,13 @@ import "./Products.css";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import EditProductModal from "../components/EditProductModal";
+import { useWishlistStore } from "../store/wishlistStore";
+import { Heart } from "lucide-react";
 
 export default function Products() {
   const navigate = useNavigate();
   const userRole = useUserStore((state) => state.role);
+  const { wishlist, addToWishlist, removeFromWishlist, isInWishlist } = useWishlistStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [animating, setAnimating] = useState<string | null>(null);
@@ -140,6 +143,27 @@ export default function Products() {
                     {p.name.charAt(0)}
                   </div>
                 )}
+                {userRole === "USER" && (
+                  <button
+                    className={`wishlist-toggle ${isInWishlist(p.id) ? 'active' : ''}`}
+                    onClick={async (e) => {
+                      e.preventDefault();
+                      try {
+                        if (isInWishlist(p.id)) {
+                          await removeFromWishlist(p.id);
+                          toast.success("Removed from wishlist");
+                        } else {
+                          await addToWishlist(p.id);
+                          toast.success("Added to wishlist!");
+                        }
+                      } catch (err) {
+                        toast.error("Wishlist sync failed");
+                      }
+                    }}
+                  >
+                    <Heart size={20} fill={isInWishlist(p.id) ? "currentColor" : "none"} />
+                  </button>
+                )}
               </div>
 
               <div className="product-info">
@@ -156,7 +180,7 @@ export default function Products() {
                   disabled={animating === p.id || p.stock === 0}
                 >
                   {p.stock === 0
-                    ? "Out of Stock"
+                    ? "Currently Unavailable"
                     : animating === p.id
                       ? "✔ In Cart"
                       : "Add to Cart"}

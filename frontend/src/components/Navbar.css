@@ -797,12 +797,21 @@
 }
 
 .item-stock {
-    background: rgba(239, 68, 68, 0.15);
-    color: #ef4444;
     padding: 2px 8px;
     border-radius: 8px;
     font-size: 0.75rem;
     font-weight: 700;
+}
+
+.item-stock.low-stock {
+    background: rgba(255, 165, 0, 0.15);
+    color: #ffa500;
+    border: 1px solid rgba(255, 165, 0, 0.3);
+}
+
+.item-stock.out-of-stock {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
