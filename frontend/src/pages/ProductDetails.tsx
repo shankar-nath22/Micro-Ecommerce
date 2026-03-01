@@ -8,7 +8,8 @@ interface Product {
     name: string;
     description: string;
     price: number;
-    imageUrl: string;
+    imageUrl?: string;
+    imageUrls?: string[];
     stock: number;
     isActive: boolean;
 }
@@ -29,6 +30,9 @@ export default function ProductDetails() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
+    const [activeImageIndex, setActiveImageIndex] = useState(0);
+    const [zoomPos, setZoomPos] = useState({ x: 0, y: 0 });
+    const [isZooming, setIsZooming] = useState(false);
 
     useEffect(() => {
         fetchProduct();
@@ -108,10 +112,59 @@ export default function ProductDetails() {
 
                 <div className="details-content-card">
                     <div className="details-layout">
-                        {/* LEFT COLUMN: Image */}
+                        {/* LEFT COLUMN: Image Gallery */}
                         <div className="details-image-section">
-                            <div className="image-wrapper">
-                                {product.imageUrl ? (
+                            <div
+                                className="main-image-container"
+                                onMouseMove={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                                    setZoomPos({ x, y });
+                                }}
+                                onMouseEnter={() => setIsZooming(true)}
+                                onMouseLeave={() => setIsZooming(false)}
+                            >
+                                {product.imageUrls && product.imageUrls.length > 0 ? (
+                                    <>
+                                        <img
+                                            src={product.imageUrls[activeImageIndex]}
+                                            alt={product.name}
+                                            className={`product-image ${isZooming ? 'zoomed' : ''}`}
+                                            style={isZooming ? { transformOrigin: `${zoomPos.x}% ${zoomPos.y}%` } : {}}
+                                        />
+
+                                        {/* Carousel Arrows */}
+                                        {product.imageUrls.length > 1 && (
+                                            <>
+                                                <button
+                                                    className="carousel-arrow prev"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActiveImageIndex((prev) => (prev === 0 ? product.imageUrls!.length - 1 : prev - 1));
+                                                    }}
+                                                    aria-label="Previous image"
+                                                >
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                                                </button>
+                                                <button
+                                                    className="carousel-arrow next"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setActiveImageIndex((prev) => (prev === product.imageUrls!.length - 1 ? 0 : prev + 1));
+                                                    }}
+                                                    aria-label="Next image"
+                                                >
+                                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                                                </button>
+                                            </>
+                                        )}
+
+                                        {isZooming && (
+                                            <div className="zoom-hint">Roll over to zoom</div>
+                                        )}
+                                    </>
+                                ) : product.imageUrl ? (
                                     <img src={product.imageUrl} alt={product.name} className="product-image" />
                                 ) : (
                                     <div className="no-image-placeholder">
@@ -120,6 +173,21 @@ export default function ProductDetails() {
                                     </div>
                                 )}
                             </div>
+
+                            {/* Thumbnail list */}
+                            {product.imageUrls && product.imageUrls.length > 1 && (
+                                <div className="thumbnail-gallery">
+                                    {product.imageUrls.map((url, index) => (
+                                        <div
+                                            key={index}
+                                            className={`thumbnail-item ${activeImageIndex === index ? 'active' : ''}`}
+                                            onClick={() => setActiveImageIndex(index)}
+                                        >
+                                            <img src={url} alt={`${product.name} thumb ${index + 1}`} />
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
                         </div>
 
                         {/* RIGHT COLUMN: Details */}

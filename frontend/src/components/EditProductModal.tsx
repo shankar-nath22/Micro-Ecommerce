@@ -13,7 +13,7 @@ export default function EditProductModal({ productId, onClose, onSuccess }: Edit
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
-    const [imageUrl, setImageUrl] = useState("");
+    const [imageUrls, setImageUrls] = useState<string[]>([""]);
     const [stock, setStock] = useState("0");
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
@@ -30,7 +30,13 @@ export default function EditProductModal({ productId, onClose, onSuccess }: Edit
             setName(res.data.name);
             setPrice(res.data.price.toString());
             setDescription(res.data.description);
-            setImageUrl(res.data.imageUrl || "");
+            if (res.data.imageUrls && res.data.imageUrls.length > 0) {
+                setImageUrls(res.data.imageUrls);
+            } else if (res.data.imageUrl) {
+                setImageUrls([res.data.imageUrl]);
+            } else {
+                setImageUrls([""]);
+            }
 
             // Fetch inventory stock
             try {
@@ -61,7 +67,7 @@ export default function EditProductModal({ productId, onClose, onSuccess }: Edit
                 name,
                 price: parseFloat(price) || 0,
                 description,
-                imageUrl,
+                imageUrls: imageUrls.filter(url => url.trim() !== ""),
                 stock: parsedStock,
             });
 
@@ -117,12 +123,37 @@ export default function EditProductModal({ productId, onClose, onSuccess }: Edit
                     </div>
 
                     <div className="form-group">
-                        <label>Image URL</label>
-                        <input
-                            type="url"
-                            value={imageUrl}
-                            onChange={(e) => setImageUrl(e.target.value)}
-                        />
+                        <label>Product Images</label>
+                        {imageUrls.map((url, index) => (
+                            <div key={index} className="multi-input-row">
+                                <input
+                                    type="text"
+                                    value={url}
+                                    onChange={(e) => {
+                                        const newUrls = [...imageUrls];
+                                        newUrls[index] = e.target.value;
+                                        setImageUrls(newUrls);
+                                    }}
+                                    placeholder="Enter image URL or paste base64..."
+                                />
+                                {imageUrls.length > 1 && (
+                                    <button
+                                        type="button"
+                                        className="remove-input-btn"
+                                        onClick={() => setImageUrls(imageUrls.filter((_, i) => i !== index))}
+                                    >
+                                        &times;
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            className="add-input-btn"
+                            onClick={() => setImageUrls([...imageUrls, ""])}
+                        >
+                            + Add Another Image
+                        </button>
                     </div>
 
                     <div className="modal-grid">

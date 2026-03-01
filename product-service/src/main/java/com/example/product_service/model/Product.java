@@ -5,6 +5,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.util.List;
+import java.util.ArrayList;
+import org.springframework.data.annotation.Transient;
 
 @Document(collection = "products")
 public class Product {
@@ -25,18 +28,18 @@ public class Product {
     @Min(value = 0, message = "Stock cannot be negative")
     private Integer stock;
 
-    private String imageUrl;
+    private List<String> imageUrls = new ArrayList<>();
     private Boolean isActive = true; // Default to true for new products
 
     public Product() {
     }
 
-    public Product(String name, String description, Double price, Integer stock, String imageUrl) {
+    public Product(String name, String description, Double price, Integer stock, List<String> imageUrls) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
-        this.imageUrl = imageUrl;
+        this.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
         this.isActive = true;
     }
 
@@ -49,12 +52,29 @@ public class Product {
         this.isActive = isActive;
     }
 
+    // Transient getter for backward compatibility with single image consumers
+    @Transient
     public String getImageUrl() {
-        return imageUrl;
+        return (imageUrls != null && !imageUrls.isEmpty()) ? imageUrls.get(0) : null;
     }
 
     public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
+        if (imageUrl != null && !imageUrl.trim().isEmpty()) {
+            if (this.imageUrls == null)
+                this.imageUrls = new ArrayList<>();
+            // Avoid duplicates if same URL is sent twice via both fields
+            if (!this.imageUrls.contains(imageUrl)) {
+                this.imageUrls.add(0, imageUrl);
+            }
+        }
+    }
+
+    public List<String> getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(List<String> imageUrls) {
+        this.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
     }
 
     public String getId() {

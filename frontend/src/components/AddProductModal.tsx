@@ -12,7 +12,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
     const [name, setName] = useState("");
     const [price, setPrice] = useState("");
     const [description, setDescription] = useState("");
-    const [imageUrl, setImageUrl] = useState("");
+    const [imageUrls, setImageUrls] = useState<string[]>([""]);
     const [stock, setStock] = useState("10");
     const [adding, setAdding] = useState(false);
 
@@ -28,7 +28,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
                 name,
                 price: parseFloat(price) || 0,
                 description,
-                imageUrl,
+                imageUrls: imageUrls.filter(url => url.trim() !== ""),
                 stock: parsedStock,
             });
 
@@ -77,13 +77,37 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
                     </div>
 
                     <div className="form-group">
-                        <label>Image URL</label>
-                        <input
-                            type="url"
-                            value={imageUrl}
-                            onChange={(e) => setImageUrl(e.target.value)}
-                            placeholder="https://example.com/image.jpg"
-                        />
+                        <label>Product Images</label>
+                        {imageUrls.map((url, index) => (
+                            <div key={index} className="multi-input-row">
+                                <input
+                                    type="text"
+                                    value={url}
+                                    onChange={(e) => {
+                                        const newUrls = [...imageUrls];
+                                        newUrls[index] = e.target.value;
+                                        setImageUrls(newUrls);
+                                    }}
+                                    placeholder="Enter image URL or paste base64..."
+                                />
+                                {imageUrls.length > 1 && (
+                                    <button
+                                        type="button"
+                                        className="remove-input-btn"
+                                        onClick={() => setImageUrls(imageUrls.filter((_, i) => i !== index))}
+                                    >
+                                        &times;
+                                    </button>
+                                )}
+                            </div>
+                        ))}
+                        <button
+                            type="button"
+                            className="add-input-btn"
+                            onClick={() => setImageUrls([...imageUrls, ""])}
+                        >
+                            + Add Another Image
+                        </button>
                     </div>
 
                     <div className="modal-grid">
