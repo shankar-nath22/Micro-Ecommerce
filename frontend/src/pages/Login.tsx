@@ -40,10 +40,9 @@ export default function Login() {
       if (!token) throw new Error("Authentication failed");
 
       const decoded = jwtDecode<JwtPayload>(token);
-      localStorage.setItem("userId", decoded.userId);
 
-      // 🔥 Store user info in Zustand (also sets token in localStorage)
-      setUser(token, res.data.role, res.data.email, res.data.name);
+      // 🔥 Store user info in Zustand
+      setUser(token, String(decoded.userId), res.data.role, res.data.email, res.data.name);
 
       toast.success("Welcome back!");
       navigate("/products");

@@ -5,6 +5,7 @@ import { useCartStore } from "../store/cartStore";
 import { useWishlistStore } from "../store/wishlistStore";
 import { Heart } from "lucide-react";
 import toast from "react-hot-toast";
+import ReviewSection from "../components/ReviewSection";
 import "./ProductDetails.css";
 
 interface Product {
@@ -247,6 +248,9 @@ export default function ProductDetails() {
                         </div>
                     </div>
                 </div>
+
+                {/* Reviews Section */}
+                <ReviewSection productId={id!} />
             </div>
         </div>
     );

@@ -66,8 +66,7 @@ export default function Signup() {
       if (!token) throw new Error("Auto-authentication failed");
 
       const decoded = jwtDecode<JwtPayload>(token);
-      localStorage.setItem("userId", decoded.userId);
-      setUser(token, loginRes.data.role, loginRes.data.email, loginRes.data.name);
+      setUser(token, String(decoded.userId), loginRes.data.role, loginRes.data.email, loginRes.data.name);
 
       toast.success("Account created and you are now logged in!");
       navigate("/products");

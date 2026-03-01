@@ -32,6 +32,7 @@
   flex-direction: column;
   gap: 12px;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .product-card::before {
@@ -98,13 +99,21 @@
   gap: 4px;
 }
 
-.product-name-link {
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
 .product-name-link:hover .product-name {
   color: var(--primary-color);
+}
+
+.product-rating-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 4px 0 8px;
+}
+
+.rating-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
 }
 
 .products-page .product-name {
@@ -496,6 +505,7 @@
     background: var(--surface-accent);
   }
 }
+
 .wishlist-toggle {
   position: absolute;
   top: 10px;

@@ -32,12 +32,15 @@ public class JwtGatewayFilter implements GlobalFilter, Ordered {
 
         String path = exchange.getRequest().getPath().value();
         String method = exchange.getRequest().getMethod().name();
+        System.out.println("🔍 Incoming Request: " + method + " " + path);
 
         // Skip JWT validation for public routes and OPTIONS preflights
         boolean isPublicPath = "OPTIONS".equalsIgnoreCase(method)
                 || path.startsWith("/auth")
                 || (path.startsWith("/products") && "GET".equalsIgnoreCase(method))
-                || (path.startsWith("/inventory/stock") && "GET".equalsIgnoreCase(method));
+                || (path.startsWith("/inventory/stock") && "GET".equalsIgnoreCase(method))
+                || (path.startsWith("/reviews/product/") && "GET".equalsIgnoreCase(method))
+                || (path.startsWith("/reviews/stats/"));
 
         if (isPublicPath) {
             System.out.println("⏭ Skipping JWT check for public routes: " + path);

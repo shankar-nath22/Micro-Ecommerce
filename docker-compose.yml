@@ -128,6 +128,20 @@ services:
       timeout: 5s
       retries: 5
 
+  review-db:
+    image: mongo:latest
+    ports:
+      - "27019:27017"
+    volumes:
+      - ./review-mongo-data:/data/db
+    networks:
+      - ecom-net
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   # ------------------------------
   # EXISTING SERVICES
   # ------------------------------
@@ -256,6 +270,21 @@ services:
     networks:
       - ecom-net
 
+  review-service:
+    build: ./review-service
+    ports:
+      - "8089:8089"
+    restart: always
+    environment:
+      MONGODB_URI: mongodb://review-db:27017/reviews_db
+      PORT: 8089
+      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+    depends_on:
+      review-db:
+        condition: service_healthy
+    networks:
+      - ecom-net
+
   api-gateway:
     build: ./api-gateway
     ports:
@@ -270,6 +299,7 @@ services:
       INVENTORY_URL: http://inventory-service:8086
       NOTIFICATION_URL: http://notification-service:8087
       WISHLIST_URL: http://wishlist-service:8088
+      REVIEW_URL: http://review-service:8089
       REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
@@ -289,6 +319,8 @@ services:
       notification-service:
         condition: service_started
       wishlist-service:
+        condition: service_started
+      review-service:
         condition: service_started
     networks:
       - ecom-net

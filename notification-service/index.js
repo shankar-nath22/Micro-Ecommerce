@@ -14,7 +14,7 @@ const io = new Server(server, {
     }
 });
 
-app.use(cors());
+// app.use(cors());
 app.use(bodyParser.json());
 
 const PORT = process.env.PORT || 8087;

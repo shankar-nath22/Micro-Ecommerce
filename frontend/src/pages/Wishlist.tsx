@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useWishlistStore } from "../store/wishlistStore";
 import { useCartStore } from "../store/cartStore";
 import { Heart, ShoppingCart, Trash2, ArrowLeft, Package } from "lucide-react";
@@ -16,6 +16,7 @@ interface Product {
 }
 
 export default function Wishlist() {
+    const navigate = useNavigate();
     const { wishlist, removeFromWishlist } = useWishlistStore();
     const { fetchCart } = useCartStore();
     const [products, setProducts] = useState<Product[]>([]);
@@ -84,14 +85,18 @@ export default function Wishlist() {
                 ) : (
                     <div className="wishlist-grid">
                         {products.map(product => (
-                            <div key={product.id} className="wishlist-card glass-morphism">
-                                <Link to={`/products/${product.id}`} className="card-image-wrapper">
+                            <div
+                                key={product.id}
+                                className="wishlist-card glass-morphism"
+                                onClick={() => navigate(`/products/${product.id}`)}
+                            >
+                                <div className="card-image-wrapper">
                                     {product.imageUrl ? (
                                         <img src={product.imageUrl} alt={product.name} className="product-image" />
                                     ) : (
                                         <div className="image-placeholder">{product.name[0]}</div>
                                     )}
-                                </Link>
+                                </div>
                                 <div className="card-content">
                                     <div className="card-info">
                                         <h3 className="product-name">{product.name}</h3>
@@ -100,7 +105,10 @@ export default function Wishlist() {
                                     <div className="card-actions">
                                         <button
                                             className="action-btn cart-btn"
-                                            onClick={() => handleAddToCart(product)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleAddToCart(product);
+                                            }}
                                             title="Add to Cart"
                                         >
                                             <ShoppingCart size={18} />
@@ -108,7 +116,10 @@ export default function Wishlist() {
                                         </button>
                                         <button
                                             className="action-btn remove-btn"
-                                            onClick={() => removeFromWishlist(product.id)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                removeFromWishlist(product.id);
+                                            }}
                                             title="Remove from Wishlist"
                                         >
                                             <Trash2 size={18} />

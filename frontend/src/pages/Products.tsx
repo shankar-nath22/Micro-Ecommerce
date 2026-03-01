@@ -10,6 +10,7 @@ import Swal from "sweetalert2";
 import EditProductModal from "../components/EditProductModal";
 import { useWishlistStore } from "../store/wishlistStore";
 import { Heart } from "lucide-react";
+import StarRating from "../components/StarRating";
 
 export default function Products() {
   const navigate = useNavigate();
@@ -26,6 +27,7 @@ export default function Products() {
 
   const [currentPage, setCurrentPage] = useState(initialPage > 0 ? initialPage : 1);
   const [pageInput, setPageInput] = useState(currentPage.toString());
+  const [ratings, setRatings] = useState<Record<string, { averageRating: number; numReviews: number }>>({});
   const itemsPerPage = 12;
 
   useEffect(() => {
@@ -47,6 +49,22 @@ export default function Products() {
   useEffect(() => {
     fetchProducts();
   }, [searchQuery]);
+
+  useEffect(() => {
+    if (products.length > 0) {
+      const visibleProductIds = products
+        .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+        .map(p => p.id);
+
+      if (visibleProductIds.length > 0) {
+        api.post('/reviews/stats/bulk', { productIds: visibleProductIds })
+          .then(res => {
+            setRatings(prev => ({ ...prev, ...res.data }));
+          })
+          .catch(err => console.error("Failed to fetch ratings", err));
+      }
+    }
+  }, [products, currentPage]);
 
   const fetchProducts = () => {
     setLoading(true);
@@ -130,7 +148,11 @@ export default function Products() {
         {products
           .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
           .map((p) => (
-            <div className="product-card premium-card" key={p.id}>
+            <div
+              className="product-card premium-card"
+              key={p.id}
+              onClick={() => navigate(`/products/${p.id}`)}
+            >
               <div className="image-container">
                 {p.imageUrl ? (
                   <img
@@ -147,6 +169,7 @@ export default function Products() {
                   <button
                     className={`wishlist-toggle ${isInWishlist(p.id) ? 'active' : ''}`}
                     onClick={async (e) => {
+                      e.stopPropagation();
                       e.preventDefault();
                       try {
                         if (isInWishlist(p.id)) {
@@ -170,13 +193,20 @@ export default function Products() {
                 <Link to={`/products/${p.id}`} className="product-name-link">
                   <h3 className="product-name">{p.name}</h3>
                 </Link>
+                <div className="product-rating-row">
+                  <StarRating rating={ratings[p.id]?.averageRating || 0} size={14} />
+                  <span className="rating-count">({ratings[p.id]?.numReviews || 0})</span>
+                </div>
                 <p className="product-price">₹{p.price.toLocaleString()}</p>
               </div>
 
               {userRole !== "ADMIN" && (
                 <button
                   className={`add-btn ${animating === p.id ? "added" : ""} ${p.stock === 0 ? "out-of-stock" : ""}`}
-                  onClick={() => addToCart(String(p.id))}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    addToCart(String(p.id));
+                  }}
                   disabled={animating === p.id || p.stock === 0}
                 >
                   {p.stock === 0
@@ -190,7 +220,8 @@ export default function Products() {
               {userRole === "ADMIN" && (
                 <div className="admin-actions">
                   <button
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setEditingProductId(p.id);
                       setIsEditModalOpen(true);
                     }}
@@ -200,7 +231,8 @@ export default function Products() {
                   </button>
                   <button
                     className="delete-btn"
-                    onClick={async () => {
+                    onClick={async (e) => {
+                      e.stopPropagation();
                       const result = await Swal.fire({
                         title: "Delete Product?",
                         text: "Are you sure you want to delete this product? This cannot be undone.",
