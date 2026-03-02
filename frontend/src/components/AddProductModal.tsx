@@ -14,6 +14,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
     const [description, setDescription] = useState("");
     const [imageUrls, setImageUrls] = useState<string[]>([""]);
     const [stock, setStock] = useState("10");
+    const [category, setCategory] = useState("Electronics");
     const [adding, setAdding] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -30,6 +31,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
                 description,
                 imageUrls: imageUrls.filter(url => url.trim() !== ""),
                 stock: parsedStock,
+                category,
             });
 
             const productId = res.data.id;
@@ -131,6 +133,24 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
                                 required
                                 min="0"
                             />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Category</label>
+                            <select
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
+                                className="modal-select"
+                                required
+                            >
+                                <option value="Electronics">Electronics</option>
+                                <option value="Fashion">Fashion</option>
+                                <option value="Home">Home & Living</option>
+                                <option value="Beauty">Beauty & Personal Care</option>
+                                <option value="Sports">Sports & Fitness</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Other">Other</option>
+                            </select>
                         </div>
                     </div>
 

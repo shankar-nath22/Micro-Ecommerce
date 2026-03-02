@@ -5,6 +5,7 @@ auth-data/
 order-data/
 payment-data/
 redis-data/
+review-mongo-data/
 
 # Node modules
 node_modules/

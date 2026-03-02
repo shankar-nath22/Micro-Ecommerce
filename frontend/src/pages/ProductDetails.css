@@ -19,7 +19,7 @@
     align-items: center;
     gap: 12px;
     background-color: rgba(127, 29, 29, 0.4);
-    border-left: 4px solid #ef4444;
+    border-left: 4px solid var(--error);
     color: #fca5a5;
     padding: 16px 24px;
     border-radius: 0 8px 8px 0;
@@ -104,10 +104,10 @@
     position: absolute;
     top: 50%;
     transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--surface-accent);
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white;
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -217,11 +217,7 @@
 .product-details-page .product-price {
     font-size: 2.5rem;
     font-weight: 900;
-    background: linear-gradient(to right, #60a5fa, #34d399);
-    /* blue-400 to emerald-400 */
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: var(--primary-color);
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
 
@@ -297,10 +293,9 @@
 }
 
 .status-badge.in-stock {
-    color: #34d399;
-    /* emerald-400 */
-    background-color: rgba(6, 78, 59, 0.2);
-    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: var(--success);
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
 }
 
 .status-badge.low-stock {
@@ -351,16 +346,17 @@
     transition: all 0.3s ease;
     cursor: pointer;
     font-family: inherit;
-    border: 2px solid #ff9f00;
-    background-color: #ff9f00;
-    color: #000000;
-    box-shadow: 0 8px 30px rgba(255, 159, 0, 0.3);
+    border: none;
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: 0 8px 30px var(--primary-glow);
 }
 
 .add-to-cart-btn:hover:not(.disabled) {
-    background-color: #ffb02e;
+    background-color: var(--primary-color);
     transform: translateY(-2px);
-    box-shadow: 0 12px 40px rgba(255, 159, 0, 0.4);
+    box-shadow: 0 12px 40px var(--primary-glow);
+    filter: brightness(1.1);
 }
 
 .add-to-cart-btn:active:not(.disabled) {
@@ -382,8 +378,8 @@
 }
 
 .admin-warning-badge {
-    background-color: rgba(30, 58, 138, 0.4);
-    border: 1px solid rgba(59, 130, 246, 0.4);
+    background-color: rgba(59, 130, 246, 0.1);
+    border: 1px solid rgba(59, 130, 246, 0.2);
     color: #bfdbfe;
     font-weight: 700;
     padding: 20px;
@@ -448,7 +444,7 @@
 }
 
 .details-wishlist-toggle {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--surface-accent);
     border: 1px solid var(--glass-border);
     color: var(--text-secondary);
     width: 48px;

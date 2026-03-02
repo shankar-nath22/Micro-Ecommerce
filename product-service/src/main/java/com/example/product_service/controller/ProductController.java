@@ -7,6 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -18,6 +23,9 @@ public class ProductController {
     @Autowired
     private ProductRepository repo;
 
+    @Autowired
+    private MongoTemplate mongoTemplate;
+
     // CREATE
     @PostMapping
     public ResponseEntity<?> create(@Valid @RequestBody Product product,
@@ -28,13 +36,40 @@ public class ProductController {
         return ResponseEntity.ok(repo.save(product));
     }
 
-    // READ — Get all or search by name
+    // READ — Advanced Filtering (Multi-category, Price Range, Stock)
     @GetMapping
-    public ResponseEntity<List<Product>> getAll(@RequestParam(required = false) String name) {
+    public ResponseEntity<List<Product>> getAll(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) List<String> categories,
+            @RequestParam(required = false) Double minPrice,
+            @RequestParam(required = false) Double maxPrice,
+            @RequestParam(required = false) Boolean inStock) {
+
+        Query query = new Query();
+        query.addCriteria(Criteria.where("isActive").is(true));
+
         if (name != null && !name.trim().isEmpty()) {
-            return ResponseEntity.ok(repo.findByNameContainingIgnoreCaseAndIsActiveTrue(name.trim()));
+            query.addCriteria(Criteria.where("name").regex(name.trim(), "i"));
         }
-        return ResponseEntity.ok(repo.findByIsActiveTrue());
+
+        if (categories != null && !categories.isEmpty()) {
+            query.addCriteria(Criteria.where("category").in(categories));
+        }
+
+        if (minPrice != null || maxPrice != null) {
+            Criteria priceCriteria = Criteria.where("price");
+            if (minPrice != null)
+                priceCriteria.gte(minPrice);
+            if (maxPrice != null)
+                priceCriteria.lte(maxPrice);
+            query.addCriteria(priceCriteria);
+        }
+
+        if (Boolean.TRUE.equals(inStock)) {
+            query.addCriteria(Criteria.where("stock").gt(0));
+        }
+
+        return ResponseEntity.ok(mongoTemplate.find(query, Product.class));
     }
 
     // READ — Get by ID (fixed)
@@ -59,6 +94,7 @@ public class ProductController {
                     existing.setPrice(updated.getPrice());
                     existing.setStock(updated.getStock());
                     existing.setImageUrls(updated.getImageUrls());
+                    existing.setCategory(updated.getCategory());
                     repo.save(existing);
                     return ResponseEntity.ok(existing);
                 })
@@ -77,5 +113,29 @@ public class ProductController {
             repo.save(p);
             return ResponseEntity.ok("Deleted");
         }).orElseGet(() -> ResponseEntity.status(404).body("Product not found"));
+    }
+
+    // ATOMIC STOCK DEDUCTION
+    @PostMapping("/{id}/deduct")
+    public ResponseEntity<?> deductStock(@PathVariable String id, @RequestParam int quantity) {
+        if (quantity <= 0) {
+            return ResponseEntity.badRequest().body("Quantity must be greater than zero");
+        }
+
+        Query query = new Query(Criteria.where("id").is(id).and("stock").gte(quantity));
+        Update update = new Update().inc("stock", -quantity);
+        FindAndModifyOptions options = new FindAndModifyOptions().returnNew(true);
+
+        Product updatedProduct = mongoTemplate.findAndModify(query, update, options, Product.class);
+
+        if (updatedProduct == null) {
+            // Check if product exists at all
+            if (!repo.existsById(id)) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Product not found");
+            }
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Insufficient stock or product inactive");
+        }
+
+        return ResponseEntity.ok(updatedProduct);
     }
 }

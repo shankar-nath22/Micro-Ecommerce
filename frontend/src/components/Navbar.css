@@ -166,18 +166,22 @@
 }
 
 .search-input {
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
+    background: transparent !important;
+    border: none !important;
+    color: var(--text-primary) !important;
     font-size: 0.95rem;
-    outline: none;
+    outline: none !important;
     width: 100%;
     font-family: inherit;
+    padding: 0 !important;
+    /* Override global padding */
+    box-shadow: none !important;
+    /* Remove global focus shadow */
 }
 
 .search-input::placeholder {
     color: var(--text-secondary);
-    opacity: 0.7;
+    opacity: 1 !important;
 }
 
 .search-back-btn {

@@ -33,17 +33,21 @@ func CreateOrder(c *gin.Context) {
 	var items []models.OrderItem
 	total := 0.0
 
-	// 2. Fetch product info + calculate total
+	// 2. Fetch product info + calculate total + DEDUCT stock
 	for productID, qty := range cart {
-		product, err := services.GetProduct(productID)
+		// Dedut stock atomically
+		err := services.DeductStock(productID, qty)
 		if err != nil {
-			log.Println("Error fetching product:", err)
-			continue
+			log.Println("❌ Stock deduction failed:", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient stock or product unavailable: " + productID})
+			return
 		}
 
-		if qty > product.Stock {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Insufficient stock for product: " + product.Name})
-			return
+		// Fetch for price and info (now that we know stock is secured)
+		product, err := services.GetProduct(productID)
+		if err != nil {
+			log.Println("Error fetching product details:", err)
+			continue
 		}
 
 		item := models.OrderItem{

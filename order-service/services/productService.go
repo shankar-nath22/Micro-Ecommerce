@@ -37,3 +37,21 @@ func GetProduct(id string) (*Product, error) {
 
 	return &product, nil
 }
+
+func DeductStock(id string, quantity int) error {
+	client := resty.New()
+
+	resp, err := client.R().
+		SetQueryParam("quantity", fmt.Sprintf("%d", quantity)).
+		Post(fmt.Sprintf("%s/products/%s/deduct", getProductServiceURL(), id))
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode() != 200 {
+		return fmt.Errorf("failed to deduct stock for product %s: %s", id, resp.String())
+	}
+
+	return nil
+}

@@ -20,9 +20,16 @@
 }
 
 .product-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 20px;
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+  gap: 20px !important;
+  transition: all 0.3s ease;
+}
+
+.product-grid.list {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 24px !important;
 }
 
 .product-card {
@@ -543,5 +550,385 @@
     height: 28px;
     top: 6px;
     right: 6px;
+  }
+}
+
+/* ========================================= */
+/* Bacola Style UI Overhaul                  */
+/* ========================================= */
+
+.bacola-style {
+  background-color: var(--bg-color);
+  min-height: 100vh;
+  color: var(--text-primary);
+}
+
+/* Breadcrumbs */
+.breadcrumbs-container {
+  padding: 20px 0;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+
+.breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.breadcrumbs a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.breadcrumbs a:hover {
+  color: var(--primary-color);
+}
+
+.breadcrumb-separator {
+  color: var(--glass-border);
+}
+
+/* Shop Banner */
+.shop-banner {
+  position: relative;
+  width: 100%;
+  max-width: 1440px;
+  height: 300px;
+  margin: 0 auto 40px;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 60px;
+  background-image: url('https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=2000');
+  background-size: cover;
+  background-position: center;
+}
+
+.banner-content {
+  position: relative;
+  z-index: 2;
+  max-width: 500px;
+}
+
+.banner-subtitle {
+  display: block;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary-color);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.banner-title {
+  font-size: 2.75rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-bottom: 16px;
+}
+
+.banner-title span {
+  color: var(--secondary-color);
+}
+
+.banner-text {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+.shop-now-btn {
+  padding: 12px 32px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 30px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.shop-now-btn:hover {
+  background: var(--primary-color);
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px var(--primary-glow);
+}
+
+.banner-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to right, var(--surface-accent), transparent);
+  z-index: 1;
+}
+
+/* Products Layout with Bacola Sidebar */
+.products-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 30px;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding-bottom: 60px;
+}
+
+.filter-sidebar {
+  background: var(--surface-color);
+  padding: 30px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  height: fit-content;
+  position: sticky;
+  top: 100px;
+}
+
+.filter-section {
+  margin-bottom: 40px;
+}
+
+.filter-section:last-child {
+  margin-bottom: 0;
+}
+
+.filter-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.checkbox-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  position: relative;
+  padding-left: 30px;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  transition: color 0.3s;
+}
+
+.checkbox-item:hover {
+  color: var(--primary-color);
+}
+
+.checkbox-item input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.checkbox-custom {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 18px;
+  width: 18px;
+  background-color: var(--surface-accent);
+  border: 2px solid var(--border-color);
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.checkbox-item input:checked~.checkbox-custom {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.checkbox-custom::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 5px;
+  top: 2px;
+  width: 4px;
+  height: 8px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.checkbox-item input:checked~.checkbox-custom::after {
+  display: block;
+}
+
+/* Price Slider */
+.price-slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dual-slider {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.slider-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.slider-row label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  min-width: 35px;
+}
+
+.price-slider {
+  flex: 1;
+  height: 6px;
+  background: var(--surface-accent);
+  border-radius: 5px;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.price-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.price-values {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.filter-go-btn {
+  padding: 6px 16px;
+  background: var(--surface-accent);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.filter-go-btn:hover {
+  background: #233a95;
+  color: white;
+}
+
+/* Main Content Styles */
+.controls-bar {
+  background: var(--surface-color);
+  padding: 15px 25px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.view-toggles {
+  display: flex;
+  gap: 10px;
+}
+
+.view-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: color 0.3s;
+}
+
+.view-btn.active {
+  color: var(--primary-color);
+}
+
+.results-count {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sort-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.sort-controls select {
+  background: var(--surface-accent);
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  outline: none;
+  cursor: pointer;
+}
+
+/* Responsive Overrides */
+@media (max-width: 1024px) {
+  .products-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filter-sidebar {
+    position: relative;
+    top: 0;
+    margin-bottom: 30px;
+  }
+
+  .shop-banner {
+    padding: 0 30px;
+    height: 250px;
+  }
+
+  .banner-title {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .controls-bar {
+    flex-direction: column;
+    gap: 15px;
+    align-items: flex-start;
+  }
+
+  .shop-banner {
+    height: 200px;
+  }
+
+  .banner-title {
+    font-size: 1.5rem;
+  }
+
+  .banner-content {
+    max-width: 100%;
   }
 }

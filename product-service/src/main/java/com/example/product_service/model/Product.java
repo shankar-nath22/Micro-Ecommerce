@@ -30,17 +30,20 @@ public class Product {
 
     private List<String> imageUrls = new ArrayList<>();
     private Boolean isActive = true; // Default to true for new products
+    private String category;
 
     public Product() {
     }
 
-    public Product(String name, String description, Double price, Integer stock, List<String> imageUrls) {
+    public Product(String name, String description, Double price, Integer stock, List<String> imageUrls,
+            String category) {
         this.name = name;
         this.description = description;
         this.price = price;
         this.stock = stock;
         this.imageUrls = imageUrls != null ? imageUrls : new ArrayList<>();
         this.isActive = true;
+        this.category = category;
     }
 
     // getters & setters
@@ -115,5 +118,13 @@ public class Product {
 
     public void setStock(Integer stock) {
         this.stock = stock;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
     }
 }

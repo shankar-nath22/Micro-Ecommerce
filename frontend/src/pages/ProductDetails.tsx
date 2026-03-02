@@ -42,6 +42,7 @@ export default function ProductDetails() {
     const [isZooming, setIsZooming] = useState(false);
 
     useEffect(() => {
+        window.scrollTo(0, 0);
         fetchProduct();
         fetchStock();
     }, [id]);

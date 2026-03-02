@@ -4,6 +4,7 @@ export interface Product {
   description: string;
   price: number;
   stock: number;
+  category: string;
   imageUrl?: string;
   imageUrls?: string[];
   isActive?: boolean;

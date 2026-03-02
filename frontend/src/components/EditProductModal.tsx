@@ -15,6 +15,7 @@ export default function EditProductModal({ productId, onClose, onSuccess }: Edit
     const [description, setDescription] = useState("");
     const [imageUrls, setImageUrls] = useState<string[]>([""]);
     const [stock, setStock] = useState("0");
+    const [category, setCategory] = useState("");
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
 
@@ -30,6 +31,7 @@ export default function EditProductModal({ productId, onClose, onSuccess }: Edit
             setName(res.data.name);
             setPrice(res.data.price.toString());
             setDescription(res.data.description);
+            setCategory(res.data.category || "Electronics");
             if (res.data.imageUrls && res.data.imageUrls.length > 0) {
                 setImageUrls(res.data.imageUrls);
             } else if (res.data.imageUrl) {
@@ -69,6 +71,7 @@ export default function EditProductModal({ productId, onClose, onSuccess }: Edit
                 description,
                 imageUrls: imageUrls.filter(url => url.trim() !== ""),
                 stock: parsedStock,
+                category,
             });
 
             // Update inventory
@@ -176,6 +179,24 @@ export default function EditProductModal({ productId, onClose, onSuccess }: Edit
                                 required
                                 min="0"
                             />
+                        </div>
+
+                        <div className="form-group">
+                            <label>Category</label>
+                            <select
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
+                                className="modal-select"
+                                required
+                            >
+                                <option value="Electronics">Electronics</option>
+                                <option value="Fashion">Fashion</option>
+                                <option value="Home">Home & Living</option>
+                                <option value="Beauty">Beauty & Personal Care</option>
+                                <option value="Sports">Sports & Fitness</option>
+                                <option value="Accessories">Accessories</option>
+                                <option value="Other">Other</option>
+                            </select>
                         </div>
                     </div>
 

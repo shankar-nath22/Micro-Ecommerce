@@ -8,4 +8,8 @@ public interface ProductRepository extends MongoRepository<Product, String> {
     List<Product> findByIsActiveTrue();
 
     List<Product> findByNameContainingIgnoreCaseAndIsActiveTrue(String name);
+
+    List<Product> findByCategoryAndIsActiveTrue(String category);
+
+    List<Product> findByNameContainingIgnoreCaseAndCategoryAndIsActiveTrue(String name, String category);
 }
