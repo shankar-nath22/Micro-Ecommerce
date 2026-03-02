@@ -14,6 +14,7 @@ import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.data.mongodb.core.FindAndModifyOptions;
 import jakarta.validation.Valid;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -49,7 +50,30 @@ public class ProductController {
         query.addCriteria(Criteria.where("isActive").is(true));
 
         if (name != null && !name.trim().isEmpty()) {
-            query.addCriteria(Criteria.where("name").regex(name.trim(), "i"));
+            String sanitizedQuery = name.trim();
+            // Split the search query into individual words for partial matching
+            String[] searchTerms = sanitizedQuery.split("\\s+");
+
+            // For each term, it must exist in AT LEAST ONE of the target fields (name,
+            // description, category)
+            List<Criteria> andCriterias = new ArrayList<>();
+
+            for (String term : searchTerms) {
+                // Typo tolerance: Match anywhere inside the strings using regex
+                String regexPattern = ".*" + term + ".*";
+
+                Criteria orCriteria = new Criteria().orOperator(
+                        Criteria.where("name").regex(regexPattern, "i"),
+                        Criteria.where("description").regex(regexPattern, "i"),
+                        Criteria.where("category").regex(regexPattern, "i"));
+
+                andCriterias.add(orCriteria);
+            }
+
+            // Using a top-level AND operator to ensure ALL typed words are found somewhere
+            if (!andCriterias.isEmpty()) {
+                query.addCriteria(new Criteria().andOperator(andCriterias.toArray(new Criteria[0])));
+            }
         }
 
         if (categories != null && !categories.isEmpty()) {
