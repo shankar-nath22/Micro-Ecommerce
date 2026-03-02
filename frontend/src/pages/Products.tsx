@@ -35,7 +35,14 @@ export default function Products() {
   const [maxPrice, setMaxPrice] = useState<number | "">(searchParams.get("maxPrice") ? Number(searchParams.get("maxPrice")) : "");
   const [inStockOnly, setInStockOnly] = useState<boolean>(searchParams.get("inStock") === "true");
   const [sortBy, setSortBy] = useState<string>(searchParams.get("sort") || "latest");
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    return (localStorage.getItem('productViewMode') as 'grid' | 'list') || 'grid';
+  });
+
+  // Persist viewMode preference
+  useEffect(() => {
+    localStorage.setItem('productViewMode', viewMode);
+  }, [viewMode]);
 
   const itemsPerPage = 12;
 
