@@ -6,6 +6,8 @@ order-data/
 payment-data/
 redis-data/
 review-mongo-data/
+zookeeper-data/
+zookeeper-log/
 
 # Node modules
 node_modules/

@@ -99,7 +99,7 @@ export default function Products() {
     // Fixed: backend @RequestParam is named 'categories'
     selectedCategories.forEach(cat => params.append("categories", cat));
     if (minPrice !== "") params.append("minPrice", minPrice.toString());
-    if (maxPrice !== "") params.append("maxPrice", maxPrice.toString());
+    if (maxPrice !== "" && maxPrice < 100000) params.append("maxPrice", maxPrice.toString());
     if (inStockOnly) params.append("inStock", "true");
 
     const queryString = params.toString();
@@ -153,15 +153,7 @@ export default function Products() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="products-page">
-        <div className="title-container">
-          <h1 className="title">Loading...</h1>
-        </div>
-      </div>
-    );
-  }
+  // Removed early loading return to prevent layout collapse and scroll jumps
 
   const toggleCategory = (catName: string) => {
     if (catName === "All") {
@@ -233,33 +225,64 @@ export default function Products() {
             <div className="price-slider-container">
               <div className="dual-slider">
                 <div className="slider-row">
-                  <label>Min:</label>
+                  <div className="slider-header">
+                    <label>Min Price</label>
+                    <div className="price-input-wrapper">
+                      <span className="currency-prefix">₹</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={minPrice === "" ? 0 : minPrice}
+                        onChange={(e) => setMinPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                        className="numeric-price-input"
+                        placeholder="0"
+                      />
+                    </div>
+                  </div>
                   <input
                     type="range"
                     min="0"
                     max="100000"
                     step="100"
-                    value={minPrice === "" ? 0 : minPrice}
+                    value={minPrice === "" ? 0 : (minPrice > 100000 ? 100000 : minPrice)}
                     onChange={(e) => setMinPrice(Number(e.target.value))}
                     className="price-slider"
                   />
                 </div>
                 <div className="slider-row">
-                  <label>Max:</label>
+                  <div className="slider-header">
+                    <label>Max Price</label>
+                    <div className="price-input-wrapper">
+                      <span className="currency-prefix">₹</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={maxPrice === "" ? 100000 : maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value === "" ? "" : Number(e.target.value))}
+                        className="numeric-price-input"
+                        placeholder="100000"
+                      />
+                    </div>
+                  </div>
                   <input
                     type="range"
                     min="0"
                     max="100000"
                     step="100"
-                    value={maxPrice === "" ? 100000 : maxPrice}
+                    value={maxPrice === "" ? 100000 : (maxPrice > 100000 ? 100000 : maxPrice)}
                     onChange={(e) => setMaxPrice(Number(e.target.value))}
                     className="price-slider"
                   />
                 </div>
               </div>
               <div className="price-values">
-                <span>₹{minPrice === "" ? 0 : minPrice} — ₹{maxPrice === "" ? 100000 : maxPrice}</span>
-                <button className="filter-go-btn" onClick={() => fetchProducts()}>FILTER</button>
+                <div className="price-range-label">
+                  <span className="price-label-text">Price Range</span>
+                  <span className="price-amount">
+                    ₹{(minPrice === "" ? 0 : minPrice).toLocaleString()} — {(maxPrice === "" || maxPrice === 100000) ? "₹100,000+" : `₹${maxPrice.toLocaleString()}`}
+                  </span>
+                </div>
+                <button className="filter-go-btn" onClick={() => fetchProducts()}>APPLY FILTER</button>
               </div>
             </div>
           </div>
@@ -313,125 +336,132 @@ export default function Products() {
               </select>
             </div>
           </div>
-          <div className={`product-grid ${viewMode}`}>
-            {products
-              .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-              .map((p) => (
-                <div
-                  className="product-card premium-card"
-                  key={p.id}
-                  onClick={() => navigate(`/products/${p.id}`)}
-                >
-                  <div className="image-container">
-                    {p.imageUrl ? (
-                      <img
-                        src={p.imageUrl}
-                        alt={p.name}
-                        className="product-image"
-                      />
-                    ) : (
-                      <div className="image-placeholder">
-                        {p.name.charAt(0)}
-                      </div>
-                    )}
-                    {userRole === "USER" && (
-                      <button
-                        className={`wishlist-toggle ${isInWishlist(p.id) ? 'active' : ''}`}
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          e.preventDefault();
-                          try {
-                            if (isInWishlist(p.id)) {
-                              await removeFromWishlist(p.id);
-                              toast.success("Removed from wishlist");
-                            } else {
-                              await addToWishlist(p.id);
-                              toast.success("Added to wishlist!");
+          <div className={`product-grid-wrapper ${loading ? 'is-loading' : ''}`}>
+            {loading && (
+              <div className="grid-loader-overlay">
+                <div className="loader-spinner"></div>
+              </div>
+            )}
+            <div className={`product-grid ${viewMode}`}>
+              {products
+                .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                .map((p) => (
+                  <div
+                    className="product-card premium-card"
+                    key={p.id}
+                    onClick={() => navigate(`/products/${p.id}`)}
+                  >
+                    <div className="image-container">
+                      {p.imageUrl ? (
+                        <img
+                          src={p.imageUrl}
+                          alt={p.name}
+                          className="product-image"
+                        />
+                      ) : (
+                        <div className="image-placeholder">
+                          {p.name.charAt(0)}
+                        </div>
+                      )}
+                      {userRole === "USER" && (
+                        <button
+                          className={`wishlist-toggle ${isInWishlist(p.id) ? 'active' : ''}`}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            try {
+                              if (isInWishlist(p.id)) {
+                                await removeFromWishlist(p.id);
+                                toast.success("Removed from wishlist");
+                              } else {
+                                await addToWishlist(p.id);
+                                toast.success("Added to wishlist!");
+                              }
+                            } catch (err) {
+                              toast.error("Wishlist sync failed");
                             }
-                          } catch (err) {
-                            toast.error("Wishlist sync failed");
-                          }
-                        }}
-                      >
-                        <Heart size={20} fill={isInWishlist(p.id) ? "currentColor" : "none"} />
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="product-info">
-                    <Link to={`/products/${p.id}`} className="product-name-link">
-                      <h3 className="product-name">{p.name}</h3>
-                    </Link>
-                    <div className="product-rating-row">
-                      <StarRating rating={ratings[p.id]?.averageRating || 0} size={14} />
-                      <span className="rating-count">({ratings[p.id]?.numReviews || 0})</span>
+                          }}
+                        >
+                          <Heart size={20} fill={isInWishlist(p.id) ? "currentColor" : "none"} />
+                        </button>
+                      )}
                     </div>
-                    <p className="product-price">₹{p.price.toLocaleString()}</p>
-                  </div>
 
-                  {userRole !== "ADMIN" && (
-                    <button
-                      className={`add-btn ${animating === p.id ? "added" : ""} ${p.stock === 0 ? "out-of-stock" : ""}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(String(p.id));
-                      }}
-                      disabled={animating === p.id || p.stock === 0}
-                    >
-                      {p.stock === 0
-                        ? "Currently Unavailable"
-                        : animating === p.id
-                          ? "✔ In Cart"
-                          : "Add to Cart"}
-                    </button>
-                  )}
+                    <div className="product-info">
+                      <Link to={`/products/${p.id}`} className="product-name-link">
+                        <h3 className="product-name">{p.name}</h3>
+                      </Link>
+                      <div className="product-rating-row">
+                        <StarRating rating={ratings[p.id]?.averageRating || 0} size={14} />
+                        <span className="rating-count">({ratings[p.id]?.numReviews || 0})</span>
+                      </div>
+                      <p className="product-price">₹{p.price.toLocaleString()}</p>
+                    </div>
 
-                  {userRole === "ADMIN" && (
-                    <div className="admin-actions">
+                    {userRole !== "ADMIN" && (
                       <button
+                        className={`add-btn ${animating === p.id ? "added" : ""} ${p.stock === 0 ? "out-of-stock" : ""}`}
                         onClick={(e) => {
                           e.stopPropagation();
-                          setEditingProductId(p.id);
-                          setIsEditModalOpen(true);
+                          addToCart(String(p.id));
                         }}
-                        className="edit-btn"
+                        disabled={animating === p.id || p.stock === 0}
                       >
-                        Edit
+                        {p.stock === 0
+                          ? "Currently Unavailable"
+                          : animating === p.id
+                            ? "✔ In Cart"
+                            : "Add to Cart"}
                       </button>
-                      <button
-                        className="delete-btn"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          const result = await Swal.fire({
-                            title: "Delete Product?",
-                            text: "Are you sure you want to delete this product? This cannot be undone.",
-                            icon: "warning",
-                            showCancelButton: true,
-                            confirmButtonColor: "#ef4444",
-                            cancelButtonColor: "#3b82f6",
-                            confirmButtonText: "Yes, delete it",
-                            customClass: {
-                              popup: 'swal-premium'
-                            }
-                          });
+                    )}
 
-                          if (result.isConfirmed) {
-                            try {
-                              await api.delete(`/products/${p.id}`);
-                              toast.success("Product deleted");
-                              setProducts(products.filter(item => item.id !== p.id));
-                            } catch (err) {
-                              toast.error("Failed to delete product");
+                    {userRole === "ADMIN" && (
+                      <div className="admin-actions">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingProductId(p.id);
+                            setIsEditModalOpen(true);
+                          }}
+                          className="edit-btn"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          className="delete-btn"
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            const result = await Swal.fire({
+                              title: "Delete Product?",
+                              text: "Are you sure you want to delete this product? This cannot be undone.",
+                              icon: "warning",
+                              showCancelButton: true,
+                              confirmButtonColor: "#ef4444",
+                              cancelButtonColor: "#3b82f6",
+                              confirmButtonText: "Yes, delete it",
+                              customClass: {
+                                popup: 'swal-premium'
+                              }
+                            });
+
+                            if (result.isConfirmed) {
+                              try {
+                                await api.delete(`/products/${p.id}`);
+                                toast.success("Product deleted");
+                                setProducts(products.filter(item => item.id !== p.id));
+                              } catch (err) {
+                                toast.error("Failed to delete product");
+                              }
                             }
-                          }
-                        }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
           </div>
 
           {products.length > itemsPerPage && (

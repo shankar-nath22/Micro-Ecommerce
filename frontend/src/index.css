@@ -10,6 +10,7 @@ body,
 
 :root {
   --bg-color: #0b0e14;
+  --bg-color-rgb: 11, 14, 20;
   --surface-color: #151921;
   --surface-accent: #1c222d;
   --primary-color: #6366f1;
@@ -42,6 +43,7 @@ body,
 
 html[data-theme="light"] {
   --bg-color: #f7f8fa;
+  --bg-color-rgb: 247, 248, 250;
   --surface-color: #ffffff;
   --surface-accent: #f1f5f9;
   --primary-color: #4f46e5;
