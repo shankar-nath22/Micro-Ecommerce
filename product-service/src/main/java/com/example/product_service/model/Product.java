@@ -2,34 +2,44 @@ package com.example.product_service.model;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.index.TextIndexed;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import java.util.List;
 import java.util.ArrayList;
+import java.io.Serializable;
 import org.springframework.data.annotation.Transient;
 
 @Document(collection = "products")
-public class Product {
+public class Product implements Serializable {
 
     @Id
     private String id;
 
     @NotBlank(message = "Product name is required")
+    @TextIndexed(weight = 3)
     private String name;
 
+    @TextIndexed(weight = 1)
     private String description;
 
     @NotNull(message = "Price is required")
     @Min(value = 0, message = "Price cannot be negative")
+    @Indexed
     private Double price;
 
     @NotNull(message = "Stock is required")
     @Min(value = 0, message = "Stock cannot be negative")
+    @Indexed
     private Integer stock;
 
     private List<String> imageUrls = new ArrayList<>();
     private Boolean isActive = true; // Default to true for new products
+
+    @Indexed
+    @TextIndexed(weight = 2)
     private String category;
 
     public Product() {

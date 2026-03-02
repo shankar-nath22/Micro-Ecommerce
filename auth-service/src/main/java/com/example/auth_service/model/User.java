@@ -17,8 +17,6 @@ public class User {
 
     private String role; // USER or ADMIN
 
-    private String refreshToken;
-
     private String name;
     private Integer age;
     private String gender;
@@ -59,14 +57,6 @@ public class User {
 
     public void setRole(String role) {
         this.role = role;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
-    }
-
-    public void setRefreshToken(String refreshToken) {
-        this.refreshToken = refreshToken;
     }
 
     public String getName() {

@@ -12,8 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @RestController
 @RequestMapping("/auth")
@@ -27,6 +29,9 @@ public class AuthController {
 
     @Autowired
     private JwtUtil jwtUtil;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@Valid @RequestBody SignupRequest req) {
@@ -70,8 +75,8 @@ public class AuthController {
         String accessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
         String refreshToken = jwtUtil.generateRefreshToken(user.getEmail());
 
-        user.setRefreshToken(refreshToken);
-        repo.save(user);
+        // Store refresh token in Redis with a 7-day expiration
+        redisTemplate.opsForValue().set("refreshToken:" + user.getEmail(), refreshToken, 7, TimeUnit.DAYS);
 
         return ResponseEntity.ok(Map.of(
                 "token", accessToken,
@@ -91,15 +96,31 @@ public class AuthController {
         }
 
         String email = jwtUtil.extractClaims(refreshToken).getSubject();
-        User user = repo.findByEmail(email).orElse(null);
 
-        if (user == null || !refreshToken.equals(user.getRefreshToken())) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid refresh token"));
+        // Validate against Redis
+        String storedToken = redisTemplate.opsForValue().get("refreshToken:" + email);
+        if (storedToken == null || !storedToken.equals(refreshToken)) {
+            return ResponseEntity.status(401).body(Map.of("error", "Invalid or expired refresh token"));
+        }
+
+        User user = repo.findByEmail(email).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(404).body(Map.of("error", "User not found"));
         }
 
         String newAccessToken = jwtUtil.generateToken(user.getId(), user.getEmail(), user.getRole());
 
         return ResponseEntity.ok(Map.of("token", newAccessToken));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestBody Map<String, String> req) {
+        String email = req.get("email");
+        if (email == null || email.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Email is required for logout"));
+        }
+        redisTemplate.delete("refreshToken:" + email);
+        return ResponseEntity.ok(Map.of("message", "Logged out successfully"));
     }
 
     @GetMapping("/profile")

@@ -157,8 +157,12 @@ services:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
       JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
       JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       auth-db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - ecom-net
@@ -170,8 +174,12 @@ services:
     restart: always
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/products_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       mongo:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - ecom-net
