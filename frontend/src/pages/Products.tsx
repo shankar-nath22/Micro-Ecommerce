@@ -428,7 +428,7 @@ export default function Products() {
                         <StarRating rating={ratings[p.id]?.averageRating || 0} size={14} />
                         <span className="rating-count">({ratings[p.id]?.numReviews || 0})</span>
                       </div>
-                      {/* <p className="product-description">{p.description}</p> */}
+                      <p className="product-description">{p.description}</p>
                     </div>
 
                     <div className="action-area">
