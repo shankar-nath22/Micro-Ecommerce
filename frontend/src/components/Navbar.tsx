@@ -8,7 +8,7 @@ import { useNotificationStore } from "../store/notificationStore";
 import { useCartStore } from "../store/cartStore";
 import { useWishlistStore } from "../store/wishlistStore";
 import { useModalStore } from "../store/modalStore";
-import { Heart, ShoppingBag, ShoppingCart, User, LogOut, Settings, Bell, Search, X } from "lucide-react";
+import { Heart, ShoppingBag, ShoppingCart, User, LogOut, Settings, Bell, Search, X, TrendingUp } from "lucide-react";
 import "./Navbar.css";
 
 interface LowStockItem {
@@ -336,6 +336,7 @@ export default function Navbar() {
                   <>
                     <Link to="/admin" className="nav-link admin-link">Inventory</Link>
                     <Link to="/admin/orders" className="nav-link admin-link">Orders</Link>
+                    <Link to="/admin/analytics" className="nav-link admin-link">Analytics</Link>
                   </>
                 )}
 

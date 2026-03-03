@@ -21,6 +21,7 @@ const Wishlist = lazy(() => import("./pages/Wishlist"));
 const ProductDetails = lazy(() => import("./pages/ProductDetails"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminOrders = lazy(() => import("./pages/AdminOrders"));
+const AdminAnalytics = lazy(() => import("./pages/AdminAnalytics"));
 const Profile = lazy(() => import("./pages/Profile"));
 
 export default function App() {
@@ -128,6 +129,14 @@ export default function App() {
             element={
               <ProtectedRoute>
                 <AdminOrders />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/analytics"
+            element={
+              <ProtectedRoute>
+                <AdminAnalytics />
               </ProtectedRoute>
             }
           />

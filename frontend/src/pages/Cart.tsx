@@ -6,12 +6,22 @@ import { Product } from "../types/product";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import { useCartStore } from "../store/cartStore";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements } from "@stripe/react-stripe-js";
+import CheckoutForm from "../components/CheckoutForm";
+
+// Initialize Stripe with a mock publishable key (or real one if provided later)
+const stripePromise = loadStripe("pk_test_mock_123_portfolio");
 
 export default function Cart() {
   const { cart, setCart, fetchCart } = useCartStore();
   const [products, setProducts] = useState<Record<string, Product>>({});
   const [loading, setLoading] = useState<boolean>(true);
   const [processing, setProcessing] = useState<boolean>(false);
+
+  // Stripe Checkout States
+  const [clientSecret, setClientSecret] = useState<string>("");
+  const [showCheckout, setShowCheckout] = useState<boolean>(false);
 
   useEffect(() => {
     loadAll();
@@ -78,6 +88,20 @@ export default function Cart() {
         console.error(err);
         toast.error("Failed to clear cart");
       }
+    }
+  }
+
+  async function initCheckout() {
+    try {
+      setProcessing(true);
+      const res = await api.post("/orders/create-payment-intent");
+      setClientSecret(res.data.clientSecret);
+      setShowCheckout(true);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to initialize checkout");
+    } finally {
+      setProcessing(false);
     }
   }
 
@@ -174,13 +198,27 @@ export default function Cart() {
               <span>₹{total.toLocaleString()}</span>
             </div>
 
-            <button
-              className="checkout-btn"
-              onClick={handleCheckout}
-              disabled={processing}
-            >
-              {processing ? "Processing..." : "Place Order"}
-            </button>
+            {!showCheckout ? (
+              <button
+                className="checkout-btn"
+                onClick={initCheckout}
+                disabled={processing}
+              >
+                {processing ? "Preparing Checkout..." : "Proceed to Checkout"}
+              </button>
+            ) : (
+              clientSecret && (
+                <div className="stripe-checkout-container fade-in">
+                  <Elements stripe={stripePromise}>
+                    <CheckoutForm
+                      clientSecret={clientSecret}
+                      onSuccess={handleCheckout}
+                      totalAmount={total}
+                    />
+                  </Elements>
+                </div>
+              )
+            )}
           </div>
         </div>
       )}

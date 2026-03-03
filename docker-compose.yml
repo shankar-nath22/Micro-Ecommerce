@@ -7,7 +7,7 @@ services:
     restart: always
     environment:
       POSTGRES_DB: auth_db
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5436:5432"
     volumes:
@@ -25,7 +25,7 @@ services:
     restart: always
     environment:
       POSTGRES_DB: order_db
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5434:5432"
     volumes:
@@ -104,7 +104,7 @@ services:
     restart: always
     environment:
       POSTGRES_DB: payment_db
-      POSTGRES_PASSWORD: 1234
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5435:5432"
     volumes:
@@ -155,8 +155,8 @@ services:
     restart: always
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
-      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
-      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
       REDIS_HOST: redis
       REDIS_PORT: 6379
     depends_on:
@@ -192,7 +192,7 @@ services:
     environment:
       REDIS_HOST: redis
       PORT: 8083
-      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       redis:
         condition: service_healthy
@@ -205,11 +205,11 @@ services:
       - "8084:8084"
     restart: always
     environment:
-      DB_DSN: "host=order-db user=postgres password=1234 dbname=order_db port=5432 sslmode=disable"
+      DB_DSN: "host=order-db user=postgres password=${DB_PASSWORD} dbname=order_db port=5432 sslmode=disable"
       CART_URL: http://cart-service:8083
       PRODUCT_URL: http://product-service:8082
       KAFKA_BROKERS: kafka:9092
-      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       order-db:
         condition: service_healthy
@@ -227,7 +227,7 @@ services:
       - "8085:8085"
     restart: always
     environment:
-      DB_DSN: "host=payment-db user=postgres password=1234 dbname=payment_db port=5432 sslmode=disable"
+      DB_DSN: "host=payment-db user=postgres password=${DB_PASSWORD} dbname=payment_db port=5432 sslmode=disable"
       KAFKA_BROKERS: kafka:9092
     depends_on:
       payment-db:
@@ -274,7 +274,7 @@ services:
     environment:
       MONGODB_URI: mongodb://mongo:27017/wishlist_db
       PORT: 8088
-      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       mongo:
         condition: service_healthy
@@ -289,7 +289,7 @@ services:
     environment:
       MONGODB_URI: mongodb://review-db:27017/reviews_db
       PORT: 8089
-      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
+      JWT_SECRET: ${JWT_SECRET}
     depends_on:
       review-db:
         condition: service_healthy
@@ -312,8 +312,8 @@ services:
       WISHLIST_URL: http://wishlist-service:8088
       REVIEW_URL: http://review-service:8089
       REDIS_HOST: redis
-      JWT_SECRET: ${JWT_SECRET:-FmX2a9Pce4zQ1Lp98NsTy7WqR5vUb6KdGh1Jm2LoWp9Zx3YqHr8St4VuCe7xDf9}
-      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400000}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
     depends_on:
       auth-service:
         condition: service_started

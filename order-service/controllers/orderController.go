@@ -11,6 +11,41 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+func CreatePaymentIntent(c *gin.Context) {
+	userId := c.GetString("userId")
+	if userId == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user id not found"})
+		return
+	}
+
+	cart, err := services.GetCart(userId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch cart"})
+		return
+	}
+
+	total := 0.0
+	for productID, qty := range cart {
+		product, err := services.GetProduct(productID)
+		if err != nil {
+			continue
+		}
+		total += float64(qty) * product.Price
+	}
+
+	if total == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Cart is empty"})
+		return
+	}
+
+	// Mocking the Stripe Intent for portfolio demonstration purposes
+	mockClientSecret := "pi_mock_123_secret_mock_456"
+
+	c.JSON(http.StatusOK, gin.H{
+		"clientSecret": mockClientSecret,
+	})
+}
+
 func CreateOrder(c *gin.Context) {
 	userId := c.GetString("userId")
 	if userId == "" {
