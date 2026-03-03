@@ -19,5 +19,10 @@ jobs:
           script: |
             cd ~/Micro-Ecommerce
             git pull origin main
+            cd frontend
+            npm install
+            npm run build
+            sudo cp -r dist/* /var/www/frontend/
+            cd ..
             docker-compose down
             docker-compose up -d --build
