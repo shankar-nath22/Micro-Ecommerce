@@ -87,6 +87,7 @@ services:
       - "9092:9092"
     restart: always
     environment:
+      KAFKA_HEAP_OPTS: "-Xms256m -Xmx256m"
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
@@ -159,6 +160,11 @@ services:
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+    deploy:
+      resources:
+        limits:
+          memory: 300M
     depends_on:
       auth-db:
         condition: service_healthy
@@ -176,6 +182,11 @@ services:
       SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/products_db
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+    deploy:
+      resources:
+        limits:
+          memory: 300M
     depends_on:
       mongo:
         condition: service_healthy
@@ -245,6 +256,11 @@ services:
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://inventory-mongo:27017/inventory_db
       KAFKA_BROKERS: kafka:9092
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+    deploy:
+      resources:
+        limits:
+          memory: 300M
     depends_on:
       inventory-mongo:
         condition: service_healthy
@@ -314,6 +330,11 @@ services:
       REDIS_HOST: redis
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
+      JAVA_OPTS: "-Xms128m -Xmx256m"
+    deploy:
+      resources:
+        limits:
+          memory: 300M
     depends_on:
       auth-service:
         condition: service_started
