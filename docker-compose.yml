@@ -1,24 +1,20 @@
+version: "3.9"
+
 services:
   # ------------------------------
   # INFRASTRUCTURE
   # ------------------------------
+
   auth-db:
     image: postgres:15-alpine
     restart: always
     environment:
       POSTGRES_DB: auth_db
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5436:5432"
     volumes:
-      - ./auth-data:/var/lib/postgresql/data
+      - auth-data:/var/lib/postgresql/data
     networks:
       - ecom-net
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d auth_db" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   order-db:
     image: postgres:15-alpine
@@ -26,45 +22,53 @@ services:
     environment:
       POSTGRES_DB: order_db
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5434:5432"
     volumes:
-      - ./order-data:/var/lib/postgresql/data
+      - order-data:/var/lib/postgresql/data
     networks:
       - ecom-net
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d order_db" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+
+  payment-db:
+    image: postgres:15-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: payment_db
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - payment-data:/var/lib/postgresql/data
+    networks:
+      - ecom-net
 
   mongo:
     image: mongo:latest
-    ports:
-      - "27017:27017"
+    restart: always
     volumes:
-      - ./mongo-data:/data/db
+      - mongo-data:/data/db
     networks:
       - ecom-net
-    healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+
+  inventory-mongo:
+    image: mongo:latest
+    restart: always
+    volumes:
+      - inventory-mongo-data:/data/db
+    networks:
+      - ecom-net
+
+  review-db:
+    image: mongo:latest
+    restart: always
+    volumes:
+      - review-mongo-data:/data/db
+    networks:
+      - ecom-net
 
   redis:
     image: redis:alpine
-    ports:
-      - "6379:6379"
+    restart: always
     volumes:
-      - ./redis-data:/data
+      - redis-data:/data
     networks:
       - ecom-net
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   zookeeper:
     image: confluentinc/cp-zookeeper:7.5.0
@@ -73,87 +77,35 @@ services:
       ZOOKEEPER_CLIENT_PORT: 2181
       ZOOKEEPER_TICK_TIME: 2000
     volumes:
-      - ./zookeeper-data:/var/lib/zookeeper/data
-      - ./zookeeper-log:/var/lib/zookeeper/log
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-log:/var/lib/zookeeper/log
     networks:
       - ecom-net
 
   kafka:
     image: confluentinc/cp-kafka:7.5.0
-    hostname: kafka
+    restart: always
     depends_on:
       - zookeeper
-    ports:
-      - "9092:9092"
-    restart: always
     environment:
       KAFKA_HEAP_OPTS: "-Xms256m -Xmx256m"
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
     networks:
       - ecom-net
 
   # ------------------------------
-  # NEW INFRASTRUCTURE
+  # SERVICES
   # ------------------------------
-  payment-db:
-    image: postgres:15-alpine
-    restart: always
-    environment:
-      POSTGRES_DB: payment_db
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5435:5432"
-    volumes:
-      - ./payment-data:/var/lib/postgresql/data
-    networks:
-      - ecom-net
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U postgres -d payment_db" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
-  inventory-mongo:
-    image: mongo:latest
-    ports:
-      - "27018:27017"
-    volumes:
-      - ./inventory-mongo-data:/data/db
-    networks:
-      - ecom-net
-    healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  review-db:
-    image: mongo:latest
-    ports:
-      - "27019:27017"
-    volumes:
-      - ./review-mongo-data:/data/db
-    networks:
-      - ecom-net
-    healthcheck:
-      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
-  # ------------------------------
-  # EXISTING SERVICES
-  # ------------------------------
   auth-service:
     build: ./auth-service
-    ports:
-      - "8081:8081"
     restart: always
+    mem_limit: 300m
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://auth-db:5432/auth_db
       JWT_SECRET: ${JWT_SECRET}
@@ -161,59 +113,40 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JAVA_OPTS: "-Xms128m -Xmx256m"
-    deploy:
-      resources:
-        limits:
-          memory: 300M
     depends_on:
-      auth-db:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - auth-db
+      - redis
     networks:
       - ecom-net
 
   product-service:
     build: ./product-service
-    ports:
-      - "8082:8082"
     restart: always
+    mem_limit: 300m
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/products_db
       REDIS_HOST: redis
       REDIS_PORT: 6379
       JAVA_OPTS: "-Xms128m -Xmx256m"
-    deploy:
-      resources:
-        limits:
-          memory: 300M
     depends_on:
-      mongo:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+      - mongo
+      - redis
     networks:
       - ecom-net
 
   cart-service:
     build: ./cart-service
-    ports:
-      - "8083:8083"
     restart: always
     environment:
       REDIS_HOST: redis
-      PORT: 8083
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
-      redis:
-        condition: service_healthy
+      - redis
     networks:
       - ecom-net
 
   order-service:
     build: ./order-service
-    ports:
-      - "8084:8084"
     restart: always
     environment:
       DB_DSN: "host=order-db user=postgres password=${DB_PASSWORD} dbname=order_db port=5432 sslmode=disable"
@@ -222,101 +155,75 @@ services:
       KAFKA_BROKERS: kafka:9092
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
-      order-db:
-        condition: service_healthy
-      kafka:
-        condition: service_started
+      - order-db
+      - kafka
     networks:
       - ecom-net
 
-  # ------------------------------
-  # NEW SERVICES
-  # ------------------------------
   payment-service:
     build: ./payment-service
-    ports:
-      - "8085:8085"
     restart: always
     environment:
       DB_DSN: "host=payment-db user=postgres password=${DB_PASSWORD} dbname=payment_db port=5432 sslmode=disable"
       KAFKA_BROKERS: kafka:9092
     depends_on:
-      payment-db:
-        condition: service_healthy
-      kafka:
-        condition: service_started
+      - payment-db
+      - kafka
     networks:
       - ecom-net
 
   inventory-service:
     build: ./inventory-service
-    ports:
-      - "8086:8086"
     restart: always
+    mem_limit: 300m
     environment:
       SPRING_DATA_MONGODB_URI: mongodb://inventory-mongo:27017/inventory_db
       KAFKA_BROKERS: kafka:9092
       JAVA_OPTS: "-Xms128m -Xmx256m"
-    deploy:
-      resources:
-        limits:
-          memory: 300M
     depends_on:
-      inventory-mongo:
-        condition: service_healthy
-      kafka:
-        condition: service_started
+      - inventory-mongo
+      - kafka
     networks:
       - ecom-net
 
   notification-service:
     build: ./notification-service
-    ports:
-      - "8087:8087"
     restart: always
     environment:
       KAFKA_BROKERS: kafka:9092
     depends_on:
-      kafka:
-        condition: service_started
+      - kafka
     networks:
       - ecom-net
 
   wishlist-service:
     build: ./wishlist-service
-    ports:
-      - "8088:8088"
     restart: always
     environment:
       MONGODB_URI: mongodb://mongo:27017/wishlist_db
-      PORT: 8088
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
-      mongo:
-        condition: service_healthy
+      - mongo
     networks:
       - ecom-net
 
   review-service:
     build: ./review-service
-    ports:
-      - "8089:8089"
     restart: always
     environment:
       MONGODB_URI: mongodb://review-db:27017/reviews_db
-      PORT: 8089
       JWT_SECRET: ${JWT_SECRET}
     depends_on:
-      review-db:
-        condition: service_healthy
+      - review-db
     networks:
       - ecom-net
 
   api-gateway:
     build: ./api-gateway
+    restart: always
+    mem_limit: 300m
     ports:
       - "8080:8080"
-    restart: always
     environment:
       AUTH_URL: http://auth-service:8081
       PRODUCT_URL: http://product-service:8082
@@ -331,32 +238,30 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       JAVA_OPTS: "-Xms128m -Xmx256m"
-    deploy:
-      resources:
-        limits:
-          memory: 300M
     depends_on:
-      auth-service:
-        condition: service_started
-      product-service:
-        condition: service_started
-      cart-service:
-        condition: service_started
-      order-service:
-        condition: service_started
-      payment-service:
-        condition: service_started
-      inventory-service:
-        condition: service_started
-      notification-service:
-        condition: service_started
-      wishlist-service:
-        condition: service_started
-      review-service:
-        condition: service_started
+      - auth-service
+      - product-service
+      - cart-service
+      - order-service
+      - payment-service
+      - inventory-service
+      - notification-service
+      - wishlist-service
+      - review-service
     networks:
       - ecom-net
 
 networks:
   ecom-net:
     driver: bridge
+
+volumes:
+  auth-data:
+  order-data:
+  payment-data:
+  mongo-data:
+  inventory-mongo-data:
+  review-mongo-data:
+  redis-data:
+  zookeeper-data:
+  zookeeper-log:
