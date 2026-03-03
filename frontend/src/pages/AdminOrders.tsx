@@ -38,6 +38,26 @@ export default function AdminOrders() {
 
     useEffect(() => {
         fetchOrders();
+
+        const ws = new WebSocket("ws://localhost:8080/orders/ws");
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === "ORDER_STATUS_UPDATE") {
+                    setOrders(prevOrders =>
+                        prevOrders.map(order =>
+                            order.id === data.orderId
+                                ? { ...order, status: data.status }
+                                : order
+                        )
+                    );
+                }
+            } catch (err) {
+                console.error("Failed to parse websocket message:", err);
+            }
+        };
+
+        return () => ws.close();
     }, []);
 
     const fetchOrders = async () => {

@@ -6,6 +6,7 @@ import (
 	"order-service/db"
 	"order-service/models"
 	"order-service/services"
+	"order-service/websocket"
 
 	"github.com/gin-gonic/gin"
 )
@@ -184,5 +185,9 @@ func UpdateOrderStatus(c *gin.Context) {
 	}
 
 	log.Printf("✅ Order %s status updated to %s", orderId, req.Status)
+
+	// Broadcast the update to connected clients via WebSocket
+	go websocket.BroadcastOrderStatus(order.ID, req.Status)
+
 	c.JSON(http.StatusOK, order)
 }
