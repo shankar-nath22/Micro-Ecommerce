@@ -149,6 +149,7 @@ export default function ProductDetails() {
                                     src={allImages[activeImageIndex]}
                                     alt={product.name}
                                     className={`product-image ${isZooming ? "zoomed" : ""}`}
+                                    loading="lazy"
                                     style={isZooming ? {
                                         transformOrigin: `${zoomPos.x}% ${zoomPos.y}%`,
                                         transform: 'scale(2)'
@@ -175,7 +176,7 @@ export default function ProductDetails() {
                                             className={`thumbnail ${activeImageIndex === index ? "active" : ""}`}
                                             onClick={() => setActiveImageIndex(index)}
                                         >
-                                            <img src={url} alt={`${product.name} ${index + 1}`} />
+                                            <img src={url} alt={`${product.name} ${index + 1}`} loading="lazy" />
                                         </div>
                                     ))}
                                 </div>

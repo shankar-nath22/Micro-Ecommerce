@@ -15,6 +15,7 @@ interface OrderItem {
 interface Order {
     id: number;
     total: number;
+    status: string;
     createdAt: string;
     items: OrderItem[];
 }
@@ -98,7 +99,9 @@ export default function Orders() {
                                     ))}
                                 </div>
 
-                                <div className="order-badge">Success</div>
+                                <div className={`order-badge status-badge-${order.status.toLowerCase()}`}>
+                                    {order.status}
+                                </div>
                             </div>
                         ))}
                     </div>

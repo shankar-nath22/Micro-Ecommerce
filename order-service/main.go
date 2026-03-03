@@ -21,6 +21,8 @@ func main() {
 	// r.POST("/orders", controllers.CreateOrder)
 	r.POST("/orders", middleware.Authenticate(), controllers.CreateOrder)
 	r.GET("/orders", middleware.Authenticate(), controllers.GetOrders)
+	r.GET("/orders/all", middleware.Authenticate(), controllers.GetAllOrders)
+	r.PUT("/orders/:id/status", middleware.Authenticate(), controllers.UpdateOrderStatus)
 
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Order service running"})

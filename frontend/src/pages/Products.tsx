@@ -389,6 +389,7 @@ export default function Products() {
                           src={p.imageUrl}
                           alt={p.name}
                           className="product-image"
+                          loading="lazy"
                         />
                       ) : (
                         <div className="image-placeholder">

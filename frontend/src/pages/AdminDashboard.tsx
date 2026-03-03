@@ -5,7 +5,7 @@ import { useUserStore } from "../store/userStore";
 import { Navigate, useNavigate, Link, useSearchParams } from "react-router-dom";
 import Swal from "sweetalert2";
 import "./AdminDashboard.css";
-import EditProductModal from "../components/EditProductModal";
+import { useModalStore } from "../store/modalStore";
 import AddProductModal from "../components/AddProductModal";
 
 interface Product {
@@ -27,8 +27,7 @@ export default function AdminDashboard() {
     const [sortColumn, setSortColumn] = useState<SortColumn>('stock');
     const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
-    const [editingProductId, setEditingProductId] = useState<string | null>(null);
-    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const openEditModal = useModalStore((state) => state.openEditModal);
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
 
     const [searchParams, setSearchParams] = useSearchParams();
@@ -205,10 +204,7 @@ export default function AdminDashboard() {
                                                         <td>
                                                             <div className="actions-cell">
                                                                 <button
-                                                                    onClick={() => {
-                                                                        setEditingProductId(p.id);
-                                                                        setIsEditModalOpen(true);
-                                                                    }}
+                                                                    onClick={() => openEditModal(p.id)}
                                                                     className="action-btn edit-action"
                                                                 >
                                                                     Edit
@@ -269,20 +265,6 @@ export default function AdminDashboard() {
                     </>
                 )}
             </div>
-
-            {isEditModalOpen && editingProductId && (
-                <EditProductModal
-                    productId={editingProductId}
-                    onClose={() => {
-                        setIsEditModalOpen(false);
-                        setEditingProductId(null);
-                    }}
-                    onSuccess={() => {
-                        fetchInventory();
-                    }}
-                />
-            )}
-
             {isAddModalOpen && (
                 <AddProductModal
                     onClose={() => setIsAddModalOpen(false)}

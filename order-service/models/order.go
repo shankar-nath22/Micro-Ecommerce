@@ -18,5 +18,6 @@ type Order struct {
 	UserID    string      `json:"userId" gorm:"index"`
 	Items     []OrderItem `json:"items" gorm:"foreignKey:OrderID"`
 	Total     float64     `json:"total"`
+	Status    string      `json:"status"` // E.g., PENDING, PROCESSING, SHIPPED, DELIVERED, CANCELLED
 	CreatedAt time.Time   `json:"createdAt"`
 }

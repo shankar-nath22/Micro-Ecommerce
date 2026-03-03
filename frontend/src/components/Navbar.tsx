@@ -7,6 +7,7 @@ import Swal from "sweetalert2";
 import { useNotificationStore } from "../store/notificationStore";
 import { useCartStore } from "../store/cartStore";
 import { useWishlistStore } from "../store/wishlistStore";
+import { useModalStore } from "../store/modalStore";
 import { Heart, ShoppingBag, ShoppingCart, User, LogOut, Settings, Bell, Search, X } from "lucide-react";
 import "./Navbar.css";
 
@@ -35,6 +36,7 @@ export default function Navbar() {
   const { lowStockItems, fetchLowStock, clearNotifications } = useNotificationStore();
   const { setCart: setStoreCart } = useCartStore();
   const { wishlist, fetchWishlist } = useWishlistStore();
+  const openEditModal = useModalStore((state) => state.openEditModal);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -286,7 +288,15 @@ export default function Navbar() {
                   ) : (
                     <div className="dropdown-list">
                       {lowStockItems.map(item => (
-                        <div key={item.id} className="dropdown-item">
+                        <div
+                          key={item.id}
+                          className="dropdown-item"
+                          onClick={() => {
+                            setShowNotifications(false);
+                            openEditModal(item.id);
+                          }}
+                          style={{ cursor: 'pointer', display: 'flex' }}
+                        >
                           <span className="item-name">{item.name}</span>
                           <span className={`item-stock ${item.stock === 0 ? 'out-of-stock' : 'low-stock'}`}>
                             {item.stock === 0 ? 'Out of Stock' : `${item.stock} left`}
@@ -323,7 +333,10 @@ export default function Navbar() {
                 )}
 
                 {userRole === "ADMIN" && (
-                  <Link to="/admin" className="nav-link admin-link">Inventory</Link>
+                  <>
+                    <Link to="/admin" className="nav-link admin-link">Inventory</Link>
+                    <Link to="/admin/orders" className="nav-link admin-link">Orders</Link>
+                  </>
                 )}
 
                 <Link to="/profile" className="nav-link profile-link">
