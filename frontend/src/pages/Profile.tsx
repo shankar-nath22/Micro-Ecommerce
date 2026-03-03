@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../api/axios";
 import toast from "react-hot-toast";
 import { useUserStore } from "../store/userStore";
 import { useNavigate } from "react-router-dom";
@@ -36,9 +36,7 @@ export default function Profile() {
 
     const fetchProfile = async () => {
         try {
-            const response = await axios.get("http://localhost:8080/auth/profile", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const response = await api.get("/auth/profile");
             const data = response.data;
             setProfile({
                 email: data.email || "",
@@ -68,19 +66,13 @@ export default function Profile() {
         e.preventDefault();
         setSaving(true);
         try {
-            await axios.put(
-                "http://localhost:8080/auth/profile",
-                {
-                    name: profile.name,
-                    age: profile.age,
-                    gender: profile.gender,
-                    phone: profile.phone,
-                    address: profile.address,
-                },
-                {
-                    headers: { Authorization: `Bearer ${token}` },
-                }
-            );
+            await api.put("/auth/profile", {
+                name: profile.name,
+                age: profile.age,
+                gender: profile.gender,
+                phone: profile.phone,
+                address: profile.address,
+            });
             toast.success("Profile updated successfully!");
         } catch (error) {
             console.error("Error updating profile", error);
@@ -110,9 +102,7 @@ export default function Profile() {
         }
 
         try {
-            await axios.delete("http://localhost:8080/auth/profile", {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            await api.delete("/auth/profile");
             toast.success("Account deleted successfully.");
             logout();
             navigate("/");

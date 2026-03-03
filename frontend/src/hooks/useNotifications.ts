@@ -3,7 +3,7 @@ import { io } from 'socket.io-client';
 import { useUserStore } from '../store/userStore';
 import { useNotificationStore } from '../store/notificationStore';
 
-const NOTIFICATION_SERVICE_URL = 'http://localhost:8087';
+const NOTIFICATION_SERVICE_URL = import.meta.env.VITE_NOTIFICATION_URL || 'http://localhost:8087';
 
 export const useNotifications = () => {
     const userRole = useUserStore((state) => state.role);

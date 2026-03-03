@@ -27,7 +27,8 @@ export default function Orders() {
     useEffect(() => {
         fetchOrders();
 
-        const ws = new WebSocket("ws://localhost:8080/orders/ws");
+        const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || "ws://localhost:8080";
+        const ws = new WebSocket(`${wsBaseUrl}/orders/ws`);
         ws.onmessage = (event) => {
             try {
                 const data = JSON.parse(event.data);

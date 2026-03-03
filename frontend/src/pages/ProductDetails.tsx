@@ -6,6 +6,7 @@ import { useWishlistStore } from "../store/wishlistStore";
 import { Heart } from "lucide-react";
 import toast from "react-hot-toast";
 import ReviewSection from "../components/ReviewSection";
+import api from "../api/axios";
 import "./ProductDetails.css";
 
 interface Product {
@@ -50,12 +51,10 @@ export default function ProductDetails() {
     const fetchProduct = async () => {
         setLoading(true);
         try {
-            const res = await fetch(`http://localhost:8080/products/${id}`);
-            if (!res.ok) throw new Error("Failed to load product details");
-            const data = await res.json();
-            setProduct(data);
+            const res = await api.get(`/products/${id}`);
+            setProduct(res.data);
         } catch (err: any) {
-            setError(err.message);
+            setError(err.message || "Failed to load product details");
         } finally {
             setLoading(false);
         }
@@ -63,15 +62,14 @@ export default function ProductDetails() {
 
     const fetchStock = async () => {
         try {
-            const res = await fetch(`http://localhost:8080/inventory/stock/${id}`);
-            if (res.ok) {
-                const data: InventoryResponse = await res.json();
-                setStockLevel(data.quantity);
-            } else if (res.status === 404) {
+            const res = await api.get(`/inventory/stock/${id}`);
+            setStockLevel(res.data.quantity);
+        } catch (err: any) {
+            if (err.response?.status === 404) {
                 setStockLevel(0); // If no stock record exists, assume out of stock
+            } else {
+                console.error("Failed to fetch stock:", err);
             }
-        } catch (err) {
-            console.error("Failed to fetch stock:", err);
         }
     };
 
@@ -82,18 +80,10 @@ export default function ProductDetails() {
         }
 
         try {
-            const res = await fetch("http://localhost:8080/cart/add", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({ productId: id, quantity: 1 }),
+            await api.post("/cart/add", {
+                productId: id,
+                quantity: 1
             });
-
-            if (!res.ok) {
-                throw new Error("Failed to add to cart");
-            }
 
             fetchCart(); // Sync global cart
             setSuccess("Added to cart!");
